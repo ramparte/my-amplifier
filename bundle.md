@@ -1,12 +1,12 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.1.0
+  version: 1.1.1
   description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python
 
 config:
   allowed_write_dirs:
-    - ~/.amplifier/dev-memory
+    - ~/amplifier-dev-memory
 
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
@@ -37,7 +37,7 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities.
 - Automatic updates when foundation evolves
 
 **From Dev-Memory:**
-- Persistent memory at `~/.amplifier/dev-memory/`
+- Persistent memory at `~/amplifier-dev-memory/`
 - Natural language: "remember this:", "what do you remember about X?"
 - Work tracking: "what was I working on?"
 - Token-efficient architecture (reads delegated to sub-agent)
