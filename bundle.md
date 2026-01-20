@@ -1,7 +1,7 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.6.2
+  version: 1.7.0
   description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits + M365 collaboration
 
 config:
@@ -18,11 +18,11 @@ includes:
   
   # NOTE: python-dev and lsp-python removed - already included via amplifier-dev → foundation
   
-  # DISABLED: amplifier-toolkit bundles - loader bug with #subdirectory= validation
-  # The loader validates repo ROOT instead of subdirectory path, causing false failures.
-  # See: https://github.com/microsoft/amplifier-core/issues/XXX (file this!)
-  # - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/deliberate-development
-  # - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/m365-collab
+  # Deliberate development - decomposition-first workflow (standalone repo)
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-deliberate-development@main
+  
+  # M365 Collaboration - agent-to-agent communication via SharePoint (standalone repo)
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-m365-collab@main
   
   # MADE support - file support requests from sessions
   - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
