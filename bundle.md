@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.3.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + user habits enforcement
+  version: 1.4.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits enforcement
 
 config:
   allowed_write_dirs:
@@ -24,11 +24,14 @@ includes:
   
   # Deliberate development - decomposition-first workflow
   - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/deliberate-development
+  
+  # MADE support - file support requests from sessions
+  - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
 ---
 
 # My Personal Amplifier
 
-A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, and user habits enforcement.
+A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, MADE support, and user habits enforcement.
 
 ## What's Included
 
@@ -57,11 +60,16 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Better than grep for "what calls this?" questions
 - Understands actual code structure, not just text
 
-**From Deliberate Development (NEW in 1.3.0):**
+**From Deliberate Development:**
 - Decomposition-first planning (deliberate-planner agent)
 - Specification-based implementation (deliberate-implementer agent)
 - Recipes: deliberate-design, feature-development
 - "4-5 planning turns, then one go-do-it turn" philosophy
+
+**From MADE Support (NEW in 1.4.0):**
+- File support requests directly from sessions
+- Just say "I need help with..." or "submit a support request"
+- Auto-extracts issue context, checks for duplicates, creates GitHub issue
 
 **User Habits Enforcement:**
 - Proactive prompting for exit criteria and reference materials
