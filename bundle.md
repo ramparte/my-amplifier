@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.1.1
-  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python
+  version: 1.2.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + user habits enforcement
 
 config:
   allowed_write_dirs:
@@ -25,7 +25,7 @@ includes:
 
 # My Personal Amplifier
 
-A thin bundle combining amplifier-dev with persistent dev-memory capabilities.
+A thin bundle combining amplifier-dev with persistent dev-memory capabilities and user habits enforcement.
 
 ## What's Included
 
@@ -54,6 +54,13 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities.
 - Better than grep for "what calls this?" questions
 - Understands actual code structure, not just text
 
+**User Habits Enforcement (NEW in 1.2.0):**
+- Proactive prompting for exit criteria and reference materials
+- Rejection of "blocked" as acceptable task closure
+- Evidence requirements before accepting completion claims
+- Dev-memory integration for tracking commitments
+- Active pushback when setting up for failure
+
 ## Usage
 
 ```bash
@@ -66,6 +73,10 @@ amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
 # Or set as default in ~/.amplifier/settings.yaml:
 # bundle: git+https://github.com/ramparte/my-amplifier@main
 ```
+
+---
+
+@my-amplifier:context/user-habits.md
 
 ---
 
