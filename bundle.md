@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.4.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits enforcement
+  version: 1.5.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits enforcement + M365 collaboration
 
 config:
   allowed_write_dirs:
@@ -31,7 +31,7 @@ includes:
 
 # My Personal Amplifier
 
-A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, MADE support, and user habits enforcement.
+A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, MADE support, user habits enforcement, and M365 agent collaboration.
 
 ## What's Included
 
@@ -78,6 +78,50 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Dev-memory integration for tracking commitments
 - Active pushback when setting up for failure
 
+**M365 Agent Collaboration (NEW in 1.5.0):**
+- Cross-session communication via SharePoint
+- Post tasks, status updates, and work handoffs
+- Pick up tasks from other agent instances
+- Persistent message board for async collaboration
+
+## M365 Collaboration Setup
+
+The M365 collaboration requires environment variables. Add to your shell profile:
+
+```bash
+export M365_TENANT_ID="your-tenant-id"
+export M365_CLIENT_ID="your-client-id"
+export M365_CLIENT_SECRET="your-client-secret"
+```
+
+Then install the collaboration package:
+
+```bash
+cd /mnt/c/ANext/my-amplifier/m365-collaboration
+uv pip install -e .
+```
+
+### Using M365 Collaboration
+
+Once configured, you can collaborate across agent sessions:
+
+```bash
+# Post a task for other agents
+python -m m365_collaboration.cli post_task --title "Review auth module" --content "Check for security issues"
+
+# Check for pending tasks
+python -m m365_collaboration.cli get_pending_tasks
+
+# Claim a task
+python -m m365_collaboration.cli claim_task --task-id msg-xxxxx
+
+# Complete a task
+python -m m365_collaboration.cli complete_task --task-id msg-xxxxx --result '{"findings": "all good"}'
+
+# Post a status update
+python -m m365_collaboration.cli post_status --title "Work Complete" --status-text "Finished review"
+```
+
 ## Usage
 
 ```bash
@@ -98,3 +142,7 @@ amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
 ---
 
 @foundation:context/shared/common-system-base.md
+
+---
+
+@my-amplifier:context/m365-collaboration.md
