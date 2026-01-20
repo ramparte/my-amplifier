@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.5.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits enforcement + M365 collaboration
+  version: 1.6.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits + M365 collaboration
 
 config:
   allowed_write_dirs:
@@ -10,7 +10,6 @@ config:
 
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
-  # Includes: standard tools, foundation agents, recipes, shadow environments
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/amplifier-dev.yaml
   
   # Dev-memory behavior - persistent local memory
@@ -27,6 +26,9 @@ includes:
   
   # MADE support - file support requests from sessions
   - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
+  
+  # M365 Collaboration - agent-to-agent communication via SharePoint
+  - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/m365-collab
 ---
 
 # My Personal Amplifier
@@ -39,7 +41,7 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - All standard tools (filesystem, bash, web, search, task delegation)
 - Session configuration and hooks
 - Access to all foundation agents (zen-architect, modular-builder, explorer, etc.)
-- Shadow environments for safe testing (already included)
+- Shadow environments for safe testing
 - Automatic updates when foundation evolves
 
 **From Dev-Memory:**
@@ -52,41 +54,28 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Automated code quality checks (ruff format + lint, pyright types, stub detection)
 - Automatic hook runs after Python file writes
 - Manual invocation: `python_check(paths=["src/"])`
-- Catches issues before commit
 
 **From LSP-Python:**
 - Semantic code intelligence via Python language server
 - Tools: `hover`, `goToDefinition`, `findReferences`, `incomingCalls`, `outgoingCalls`
-- Better than grep for "what calls this?" questions
-- Understands actual code structure, not just text
 
 **From Deliberate Development:**
 - Decomposition-first planning (deliberate-planner agent)
 - Specification-based implementation (deliberate-implementer agent)
-- Recipes: deliberate-design, feature-development
-- "4-5 planning turns, then one go-do-it turn" philosophy
 
-**From MADE Support (NEW in 1.4.0):**
+**From MADE Support:**
 - File support requests directly from sessions
 - Just say "I need help with..." or "submit a support request"
-- Auto-extracts issue context, checks for duplicates, creates GitHub issue
 
-**User Habits Enforcement:**
-- Proactive prompting for exit criteria and reference materials
-- Rejection of "blocked" as acceptable task closure
-- Evidence requirements before accepting completion claims
-- Dev-memory integration for tracking commitments
-- Active pushback when setting up for failure
-
-**M365 Agent Collaboration (NEW in 1.5.0):**
-- Cross-session communication via SharePoint
+**From M365 Collaboration:**
+- `m365_collab` tool for agent-to-agent communication
 - Post tasks, status updates, and work handoffs
 - Pick up tasks from other agent instances
-- Persistent message board for async collaboration
+- Persistent message board via SharePoint
 
 ## M365 Collaboration Setup
 
-The M365 collaboration requires environment variables. Add to your shell profile:
+Set these environment variables before starting Amplifier:
 
 ```bash
 export M365_TENANT_ID="your-tenant-id"
@@ -94,41 +83,17 @@ export M365_CLIENT_ID="your-client-id"
 export M365_CLIENT_SECRET="your-client-secret"
 ```
 
-Then install the collaboration package:
+Then use the `m365_collab` tool directly:
 
-```bash
-cd /mnt/c/ANext/my-amplifier/m365-collaboration
-uv pip install -e .
 ```
-
-### Using M365 Collaboration
-
-Once configured, you can collaborate across agent sessions:
-
-```bash
-# Post a task for other agents
-python -m m365_collaboration.cli post_task --title "Review auth module" --content "Check for security issues"
-
-# Check for pending tasks
-python -m m365_collaboration.cli get_pending_tasks
-
-# Claim a task
-python -m m365_collaboration.cli claim_task --task-id msg-xxxxx
-
-# Complete a task
-python -m m365_collaboration.cli complete_task --task-id msg-xxxxx --result '{"findings": "all good"}'
-
-# Post a status update
-python -m m365_collaboration.cli post_status --title "Work Complete" --status-text "Finished review"
+m365_collab(operation="get_pending_tasks")
+m365_collab(operation="post_task", title="Review code", description="Check auth module")
 ```
 
 ## Usage
 
 ```bash
-# Add to your local bundle list
-amplifier bundle add git+https://github.com/ramparte/my-amplifier@main
-
-# Or run directly
+# Run directly
 amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
 
 # Or set as default in ~/.amplifier/settings.yaml:
@@ -142,7 +107,3 @@ amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
 ---
 
 @foundation:context/shared/common-system-base.md
-
----
-
-@my-amplifier:context/m365-collaboration.md
