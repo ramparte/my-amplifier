@@ -1,7 +1,7 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.6.0
+  version: 1.6.1
   description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits + M365 collaboration
 
 config:
@@ -10,16 +10,13 @@ config:
 
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
+  # Includes: foundation → python-dev → lsp-python, shadow, recipes, all standard tools
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/amplifier-dev.yaml
   
   # Dev-memory behavior - persistent local memory
   - bundle: git+https://github.com/ramparte/amplifier-collection-dev-memory@main#subdirectory=behaviors/dev-memory.yaml
   
-  # Python development - code quality checks (ruff, pyright, stub detection)
-  - bundle: git+https://github.com/microsoft/amplifier-bundle-python-dev@main
-  
-  # Python LSP - semantic code intelligence via Python language server
-  - bundle: git+https://github.com/microsoft/amplifier-bundle-lsp-python@main
+  # NOTE: python-dev and lsp-python removed - already included via amplifier-dev → foundation
   
   # Deliberate development - decomposition-first workflow
   - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/deliberate-development
