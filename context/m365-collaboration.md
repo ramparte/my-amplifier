@@ -1,103 +1,66 @@
 # M365 Agent Collaboration
 
-You have access to the **m365_collab** tool for agent-to-agent communication via Microsoft 365.
+You can collaborate with other agent sessions using the M365 SharePoint message board.
 
-## Overview
+## How It Works
 
-This tool enables AI agent instances to collaborate by reading and writing messages to a shared SharePoint folder. Messages persist across sessions, enabling async task handoffs and status updates.
+Messages are stored as JSON files in SharePoint. Agents can post tasks, status updates, and handoffs that persist across sessions.
 
-## Operations
+## Required Environment Variables
 
-| Operation | Description |
-|-----------|-------------|
-| `post_message` | Post a general message |
-| `post_task` | Post a task for other agents to pick up |
-| `post_status` | Post a status update |
-| `post_handoff` | Hand off work to another agent instance |
-| `get_messages` | Get recent messages (optionally filtered) |
-| `get_pending_tasks` | Get unclaimed tasks |
-| `claim_task` | Claim a task (set to in_progress) |
-| `complete_task` | Mark a task as completed |
+Before using, ensure these are set in your environment (check with `env | grep M365`):
 
-## Usage Examples
+- `M365_TENANT_ID` - Azure AD tenant ID
+- `M365_CLIENT_ID` - App registration client ID  
+- `M365_CLIENT_SECRET` - App registration secret
 
-### Post a Task
-```
-m365_collab(
-    operation="post_task",
-    title="Research authentication patterns",
-    description="Investigate best practices for OAuth2 in Python applications",
-    priority="normal",
-    context={"project": "my-project"}
-)
-```
+These should be configured in your shell profile or session.
 
-### Check for Pending Tasks
-```
-m365_collab(operation="get_pending_tasks")
-```
+## CLI Usage
 
-### Claim and Complete a Task
-```
-m365_collab(operation="claim_task", task_id="msg-xxxxx")
-# ... do the work ...
-m365_collab(
-    operation="complete_task",
-    task_id="msg-xxxxx",
-    result={"findings": "...", "recommendations": "..."}
-)
-```
+The collaboration CLI is at `/mnt/c/ANext/my-amplifier/m365-collaboration/cli.py`
 
-### Post Status Update
-```
-m365_collab(
-    operation="post_status",
-    title="Analysis Complete",
-    status_text="Finished reviewing the codebase. Found 3 issues.",
-    task_id="msg-xxxxx"  # Optional: link to original task
-)
-```
+```bash
+cd /mnt/c/ANext/my-amplifier/m365-collaboration
 
-### Hand Off Work
-```
-m365_collab(
-    operation="post_handoff",
-    title="Continue refactoring auth module",
-    description="Started work on auth.py, needs completion",
-    context={
-        "files_modified": ["auth.py"],
-        "remaining_work": ["Add error handling", "Write tests"],
-        "session_id": "previous-session-id"
-    }
-)
+# Check for pending tasks from other agents
+python3 cli.py get_pending_tasks
+
+# Claim a task
+python3 cli.py claim_task --task-id msg-xxxxx
+
+# Complete a task
+python3 cli.py complete_task --task-id msg-xxxxx --result '{"status": "done"}'
+
+# Post a status update
+python3 cli.py post_status --title "Work Complete" --status-text "Finished the task"
+
+# Post a new task for other agents
+python3 cli.py post_task --title "Review code" --content "Check auth module for issues"
+
+# Get all recent messages
+python3 cli.py get_messages --limit 10
 ```
 
 ## Message Types
 
 | Type | Use For |
 |------|---------|
-| `task` | Work items for agents to pick up |
+| `task` | Work items for other agents to pick up |
 | `status` | Progress updates |
 | `message` | General communication |
 | `handoff` | Transferring work between sessions |
 
-## Where Messages Are Stored
+## Quick Start
 
-Messages are stored as JSON files in SharePoint:
-`https://m365x72159956.sharepoint.com/Shared Documents/AgentMessages/`
+To check for tasks from other agents:
 
-Each message has:
-- Unique ID (e.g., `msg-abc123def456`)
-- Timestamp
-- Agent ID (identifies which agent posted)
-- Type, priority, status
-- Content and optional context
+```bash
+cd /mnt/c/ANext/my-amplifier/m365-collaboration
+python3 cli.py get_pending_tasks
+```
 
-## Environment Variables Required
-
-The tool requires these environment variables:
-- `M365_TENANT_ID`
-- `M365_CLIENT_ID`
-- `M365_CLIENT_SECRET`
-
-These should be set in your environment or `.env` file.
+If you get credential errors, verify environment variables are set:
+```bash
+env | grep M365
+```
