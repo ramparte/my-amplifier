@@ -1,7 +1,7 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.7.0
+  version: 1.8.0
   description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits + M365 collaboration
 
 config:
@@ -13,18 +13,21 @@ includes:
   # Includes: foundation → python-dev → lsp-python, shadow, recipes, all standard tools
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/amplifier-dev.yaml
   
-  # Dev-memory behavior - persistent local memory
+  # Dev-memory behavior - persistent local memory (thin, no foundation)
   - bundle: git+https://github.com/ramparte/amplifier-collection-dev-memory@main#subdirectory=behaviors/dev-memory.yaml
   
   # NOTE: python-dev and lsp-python removed - already included via amplifier-dev → foundation
   
-  # Deliberate development - decomposition-first workflow (standalone repo)
+  # Deliberate development - decomposition-first workflow
+  # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
   - bundle: git+https://github.com/ramparte/amplifier-bundle-deliberate-development@main
   
-  # M365 Collaboration - agent-to-agent communication via SharePoint (standalone repo)
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-m365-collab@main
+  # M365 Collaboration - agent-to-agent communication via SharePoint
+  # NOTE: Using bundle.yaml which has proper tool module config (bundle.md has string instead of dict)
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-m365-collab@main#bundle.yaml
   
   # MADE support - file support requests from sessions
+  # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
   - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
 ---
 
