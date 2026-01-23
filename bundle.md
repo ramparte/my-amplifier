@@ -2,7 +2,7 @@
 bundle:
   name: my-amplifier
   version: 1.8.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits + M365 collaboration
+  description: Personal Amplifier with amplifier-dev + dev-memory + python-dev + lsp-python + deliberate-development + made-support + user habits + amplifier-stories + M365 collaboration
 
 config:
   allowed_write_dirs:
@@ -29,6 +29,9 @@ includes:
   # MADE support - file support requests from sessions
   # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
   - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
+  
+  # Amplifier Stories - autonomous storytelling engine
+  - bundle: git+https://github.com/ramparte/amplifier-stories@main
 ---
 
 # My Personal Amplifier
@@ -72,6 +75,13 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Post tasks, status updates, and work handoffs
 - Pick up tasks from other agent instances
 - Persistent message board via SharePoint
+
+**From Amplifier Stories:**
+- Autonomous storytelling engine for Amplifier ecosystem
+- 10 specialist agents (story-researcher, content-strategist, technical-writer, etc.)
+- 5 content formats: HTML presentations, PowerPoint, Excel, Word, PDF
+- 4 automated workflows (session→case study, git tag→changelog, weekly digest, blog posts)
+- Create content manually or via automated recipes
 
 ## M365 Collaboration Setup
 
