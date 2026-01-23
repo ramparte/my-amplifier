@@ -23,8 +23,7 @@ includes:
   - bundle: git+https://github.com/ramparte/amplifier-bundle-deliberate-development@main
   
   # M365 Collaboration - agent-to-agent communication via SharePoint
-  # NOTE: Using bundle.yaml which has proper tool module config (bundle.md has string instead of dict)
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-m365-collab@main#bundle.yaml
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-m365-collab@main
   
   # MADE support - file support requests from sessions
   # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
