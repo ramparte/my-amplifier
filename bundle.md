@@ -30,7 +30,7 @@ includes:
   - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
   
   # Amplifier Stories - autonomous storytelling engine
-  - bundle: git+https://github.com/ramparte/amplifier-stories@main
+  - bundle: git+https://github.com/ramparte/amplifier-stories@master
 ---
 
 # My Personal Amplifier
