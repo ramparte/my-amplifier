@@ -1,12 +1,13 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.9.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + M365 collaboration
+  version: 1.10.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + M365 collaboration
 
 config:
   allowed_write_dirs:
     - ~/amplifier-dev-memory
+    - ~/.amplifier/memory
 
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
@@ -15,6 +16,9 @@ includes:
   
   # Dev-memory behavior - persistent local memory (thin, no foundation)
   - bundle: git+https://github.com/ramparte/amplifier-collection-dev-memory@main#subdirectory=behaviors/dev-memory.yaml
+  
+  # Agent-memory - semantic memory with vector search
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-agent-memory@main
   
   # Session discovery - automatic session indexing and search
   - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/session-discovery
