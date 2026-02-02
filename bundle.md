@@ -9,6 +9,10 @@ config:
     - ~/amplifier-dev-memory
     - ~/.amplifier/memory
 
+tools:
+  - module: tools/attention-firewall
+    name: attention_firewall
+
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
   # Includes: foundation → python-dev → lsp-python, shadow, recipes, all standard tools
@@ -96,6 +100,12 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - 4 automated workflows (session→case study, git tag→changelog, weekly digest, blog posts)
 - Create content manually or via automated recipes
 
+**Attention Firewall:**
+- Query your notification firewall database conversationally
+- Check what notifications arrived and how they were filtered
+- Audit suppression rules to ensure correct filtering
+- Access dashboard location and recent notification history
+
 ## M365 Collaboration Setup
 
 Set these environment variables before starting Amplifier:
@@ -126,6 +136,8 @@ amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
 ---
 
 @my-amplifier:context/user-habits.md
+
+@my-amplifier:context/attention-firewall.md
 
 ---
 
