@@ -2,7 +2,7 @@
 bundle:
   name: my-amplifier
   version: 1.10.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + M365 collaboration
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall
 
 config:
   allowed_write_dirs:
@@ -10,8 +10,8 @@ config:
     - ~/.amplifier/memory
 
 tools:
-  - module: tools/attention-firewall
-    name: attention_firewall
+  - module: attention_firewall
+    source: ./tools/attention-firewall
 
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
@@ -32,9 +32,6 @@ includes:
   # Deliberate development - decomposition-first workflow
   # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
   - bundle: git+https://github.com/ramparte/amplifier-bundle-deliberate-development@main
-  
-  # M365 Collaboration - agent-to-agent communication via SharePoint
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-m365-collab@main
   
   # MADE support - file support requests from sessions
   # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
@@ -87,12 +84,6 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - File support requests directly from sessions
 - Just say "I need help with..." or "submit a support request"
 
-**From M365 Collaboration:**
-- `m365_collab` tool for agent-to-agent communication
-- Post tasks, status updates, and work handoffs
-- Pick up tasks from other agent instances
-- Persistent message board via SharePoint
-
 **From Amplifier Stories:**
 - Autonomous storytelling engine for Amplifier ecosystem
 - 10 specialist agents (story-researcher, content-strategist, technical-writer, etc.)
@@ -105,23 +96,6 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Check what notifications arrived and how they were filtered
 - Audit suppression rules to ensure correct filtering
 - Access dashboard location and recent notification history
-
-## M365 Collaboration Setup
-
-Set these environment variables before starting Amplifier:
-
-```bash
-export M365_TENANT_ID="your-tenant-id"
-export M365_CLIENT_ID="your-client-id"
-export M365_CLIENT_SECRET="your-client-secret"
-```
-
-Then use the `m365_collab` tool directly:
-
-```
-m365_collab(operation="get_pending_tasks")
-m365_collab(operation="post_task", title="Review code", description="Check auth module")
-```
 
 ## Usage
 
