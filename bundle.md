@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.10.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall
+  version: 1.11.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall + project-orchestration
 
 config:
   allowed_write_dirs:
@@ -39,11 +39,14 @@ includes:
   
   # Amplifier Stories - autonomous storytelling engine
   - bundle: git+https://github.com/ramparte/amplifier-stories@master
+  
+  # Project Orchestration - natural language project management (NEW in v1.11.0)
+  - behavior: git+https://github.com/ramparte/amplifier-bundle-project-orchestrator@main#subdirectory=behaviors/project-orchestration.yaml
 ---
 
 # My Personal Amplifier
 
-A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, MADE support, user habits enforcement, and M365 agent collaboration.
+A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, MADE support, user habits enforcement, M365 agent collaboration, and natural language project orchestration.
 
 ## What's Included
 
@@ -97,6 +100,14 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Audit suppression rules to ensure correct filtering
 - Access dashboard location and recent notification history
 
+**Project Orchestration (NEW in v1.11.0):**
+- Natural language project management: "where are we?", "do phase X", "continue"
+- Fresh isolated sessions per task (automatic context isolation)
+- Persistent state across sessions (.project/state.json or .longbuilder/state/project_state.json)
+- Approval gates at strategic checkpoints
+- Automated test verification after each task
+- Phase-based execution with progress tracking
+
 ## Usage
 
 ```bash
@@ -106,6 +117,23 @@ amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
 # Or set as default in ~/.amplifier/settings.yaml:
 # bundle: git+https://github.com/ramparte/my-amplifier@main
 ```
+
+## Project Orchestration Commands (NEW)
+
+When working in a project directory with `.project/state.json` or `.longbuilder/state/project_state.json`:
+
+```
+> where are we?
+[Shows current phase, progress, next tasks]
+
+> do phase 1
+[Executes all pending tasks in Phase 1 with approval gates]
+
+> continue
+[Resumes from current state]
+```
+
+Each task runs in a fresh isolated session automatically - no manual setup needed!
 
 ---
 
