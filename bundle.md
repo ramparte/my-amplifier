@@ -2,7 +2,7 @@
 bundle:
   name: my-amplifier
   version: 1.11.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + session-discovery + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall + project-orchestration
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall + project-orchestration
 
 config:
   allowed_write_dirs:
@@ -23,9 +23,6 @@ includes:
   
   # Agent-memory - semantic memory with vector search
   - bundle: git+https://github.com/ramparte/amplifier-bundle-agent-memory@main
-  
-  # Session discovery - automatic session indexing and search
-  - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/session-discovery
   
   # NOTE: python-dev and lsp-python removed - already included via amplifier-dev → foundation
   
@@ -62,13 +59,6 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Natural language: "remember this:", "what do you remember about X?"
 - Work tracking: "what was I working on?"
 - Token-efficient architecture (reads delegated to sub-agent)
-
-**From Session Discovery:**
-- Automatic session indexing when sessions complete
-- Natural queries: "What was I working on last week?", "What are my current projects?"
-- Session index at `~/.amplifier/session-index.json`
-- Session-namer agent for generating descriptive session names
-- Fast metadata filtering before deep session-analyst searches
 
 **From Python-Dev:**
 - Automated code quality checks (ruff format + lint, pyright types, stub detection)
