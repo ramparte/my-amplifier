@@ -37,6 +37,9 @@ includes:
   # Amplifier Stories - autonomous storytelling engine
   - bundle: git+https://github.com/ramparte/amplifier-stories@master
   
+  # Projector - cross-session project management, strategy enforcement, coordination
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-projector@main
+
   # Project Orchestration - natural language project management (NEW in v1.11.0)
   - behavior: git+https://github.com/ramparte/amplifier-bundle-project-orchestrator@main#subdirectory=behaviors/project-orchestration.yaml
 ---
