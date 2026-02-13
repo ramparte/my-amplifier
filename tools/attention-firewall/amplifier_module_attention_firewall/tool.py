@@ -5,63 +5,66 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from amplifier_core import ToolResult
+
 
 class AttentionFirewallTool:
     """Query the Attention Firewall notification database."""
-    
+
     name = "attention_firewall"
     description = """Query the Attention Firewall notification database.
-    
+
 Available queries:
 - recent: Get recent important notifications (surfaced items)
-- timeframe: Get notifications from a specific time period  
+- timeframe: Get notifications from a specific time period
 - suppressed: Get suppressed notifications to audit filtering rules
 - stats: Get statistics about notification filtering
 - all: Get all notifications in a time period
 """
-    
-    parameters = {
-        "type": "object",
-        "properties": {
-            "query": {
-                "type": "string",
-                "enum": ["recent", "timeframe", "suppressed", "stats", "all"],
-                "description": "Type of query to run",
+
+    @property
+    def input_schema(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "enum": ["recent", "timeframe", "suppressed", "stats", "all"],
+                    "description": "Type of query to run",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Number of results (for recent queries)",
+                    "default": 10,
+                },
+                "hours": {
+                    "type": "number",
+                    "description": "Time period in hours (for timeframe queries)",
+                    "default": 1.0,
+                },
             },
-            "limit": {
-                "type": "integer",
-                "description": "Number of results (for recent queries)",
-                "default": 10,
-            },
-            "hours": {
-                "type": "number", 
-                "description": "Time period in hours (for timeframe queries)",
-                "default": 1.0,
-            },
-        },
-        "required": ["query"],
-    }
-    
+            "required": ["query"],
+        }
+
     def __init__(self):
         self.db_path = Path.home() / ".attention-firewall" / "notifications.db"
-    
-    async def execute(
-        self,
-        query: str,
-        limit: int = 10,
-        hours: float = 1.0,
-        **kwargs: Any,
-    ) -> dict:
+
+    async def execute(self, input: dict[str, Any]) -> ToolResult:
         """Execute a query against the firewall database."""
+        query = input.get("query", "recent")
+        limit = input.get("limit", 10)
+        hours = input.get("hours", 1.0)
+
         if not self.db_path.exists():
-            return {
-                "error": "Attention Firewall database not found. Is the daemon running?",
-            }
-        
+            return ToolResult(
+                success=False,
+                error={"message": "Attention Firewall database not found. Is the daemon running?"},
+            )
+
         try:
             conn = sqlite3.connect(self.db_path)
             conn.row_factory = sqlite3.Row
-            
+
             if query == "recent":
                 result = self._query_recent(conn, limit)
             elif query == "timeframe":
@@ -74,57 +77,40 @@ Available queries:
                 result = self._query_all(conn, hours)
             else:
                 conn.close()
-                return {"error": f"Unknown query type: {query}"}
-            
+                return ToolResult(success=False, error={"message": f"Unknown query type: {query}"})
+
             conn.close()
-            return result
-            
+            return ToolResult(success=True, output=result)
+
         except Exception as e:
-            return {"error": f"Database query failed: {e}"}
-    
+            return ToolResult(success=False, error={"message": f"Database query failed: {e}"})
+
     def _query_recent(self, conn: sqlite3.Connection, limit: int) -> dict:
         """Get recent important (surfaced) notifications."""
         cursor = conn.cursor()
-        
         notifications = cursor.execute("""
-            SELECT 
-                timestamp,
-                app_id,
-                sender,
-                title,
-                body,
-                rationale
+            SELECT timestamp, app_id, sender, title, body, rationale
             FROM notifications
             WHERE action = 'SURFACE'
             ORDER BY timestamp DESC
             LIMIT ?
         """, (limit,)).fetchall()
-        
         return {
             "query": "recent",
             "count": len(notifications),
             "notifications": [dict(n) for n in notifications],
         }
-    
+
     def _query_timeframe(self, conn: sqlite3.Connection, hours: float) -> dict:
         """Get important notifications from a time period."""
         cursor = conn.cursor()
         cutoff = datetime.now() - timedelta(hours=hours)
-        
         notifications = cursor.execute("""
-            SELECT 
-                timestamp,
-                app_id,
-                sender,
-                title,
-                body,
-                rationale
+            SELECT timestamp, app_id, sender, title, body, rationale
             FROM notifications
-            WHERE action = 'SURFACE'
-              AND timestamp > ?
+            WHERE action = 'SURFACE' AND timestamp > ?
             ORDER BY timestamp DESC
         """, (cutoff.isoformat(),)).fetchall()
-        
         return {
             "query": "timeframe",
             "hours": hours,
@@ -132,32 +118,21 @@ Available queries:
             "count": len(notifications),
             "notifications": [dict(n) for n in notifications],
         }
-    
+
     def _query_suppressed(self, conn: sqlite3.Connection, hours: float) -> dict:
         """Get suppressed notifications to audit filtering."""
         cursor = conn.cursor()
         cutoff = datetime.now() - timedelta(hours=hours)
-        
         notifications = cursor.execute("""
-            SELECT 
-                timestamp,
-                app_id,
-                sender,
-                title,
-                body,
-                rationale
+            SELECT timestamp, app_id, sender, title, body, rationale
             FROM notifications
-            WHERE action = 'SUPPRESS'
-              AND timestamp > ?
+            WHERE action = 'SUPPRESS' AND timestamp > ?
             ORDER BY timestamp DESC
         """, (cutoff.isoformat(),)).fetchall()
-        
-        # Group by rationale to show patterns
         by_reason: dict[str, int] = {}
         for n in notifications:
-            reason = n['rationale'] or 'Unknown'
+            reason = n["rationale"] or "Unknown"
             by_reason[reason] = by_reason.get(reason, 0) + 1
-        
         return {
             "query": "suppressed",
             "hours": hours,
@@ -166,14 +141,13 @@ Available queries:
             "by_reason": by_reason,
             "notifications": [dict(n) for n in notifications],
         }
-    
+
     def _query_stats(self, conn: sqlite3.Connection, hours: float) -> dict:
         """Get statistics about notification filtering."""
         cursor = conn.cursor()
         cutoff = datetime.now() - timedelta(hours=hours)
-        
         stats = cursor.execute("""
-            SELECT 
+            SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN action = 'SURFACE' THEN 1 ELSE 0 END) as surfaced,
                 SUM(CASE WHEN action = 'DIGEST' THEN 1 ELSE 0 END) as digested,
@@ -181,8 +155,6 @@ Available queries:
             FROM notifications
             WHERE timestamp > ?
         """, (cutoff.isoformat(),)).fetchone()
-        
-        # Get top apps
         top_apps = cursor.execute("""
             SELECT app_id, COUNT(*) as count
             FROM notifications
@@ -191,44 +163,32 @@ Available queries:
             ORDER BY count DESC
             LIMIT 5
         """, (cutoff.isoformat(),)).fetchall()
-        
         return {
             "query": "stats",
             "hours": hours,
             "cutoff": cutoff.isoformat(),
-            "total": stats['total'],
-            "surfaced": stats['surfaced'],
-            "digested": stats['digested'],
-            "suppressed": stats['suppressed'],
-            "surface_rate": round(stats['surfaced'] / stats['total'] * 100, 1) if stats['total'] > 0 else 0,
+            "total": stats["total"],
+            "surfaced": stats["surfaced"],
+            "digested": stats["digested"],
+            "suppressed": stats["suppressed"],
+            "surface_rate": round(stats["surfaced"] / stats["total"] * 100, 1) if stats["total"] > 0 else 0,
             "top_apps": [dict(a) for a in top_apps],
         }
-    
+
     def _query_all(self, conn: sqlite3.Connection, hours: float) -> dict:
         """Get ALL notifications in time period."""
         cursor = conn.cursor()
         cutoff = datetime.now() - timedelta(hours=hours)
-        
         notifications = cursor.execute("""
-            SELECT 
-                timestamp,
-                app_id,
-                sender,
-                title,
-                body,
-                action,
-                rationale
+            SELECT timestamp, app_id, sender, title, body, action, rationale
             FROM notifications
             WHERE timestamp > ?
             ORDER BY timestamp DESC
         """, (cutoff.isoformat(),)).fetchall()
-        
-        # Group by action
         by_action: dict[str, int] = {}
         for n in notifications:
-            action = n['action']
+            action = n["action"]
             by_action[action] = by_action.get(action, 0) + 1
-        
         return {
             "query": "all",
             "hours": hours,
