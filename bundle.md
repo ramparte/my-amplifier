@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.11.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall + project-orchestration
+  version: 1.12.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall + session-discovery + project-orchestration
 
 config:
   allowed_write_dirs:
@@ -39,6 +39,9 @@ includes:
   
   # Projector - cross-session project management, strategy enforcement, coordination
   - bundle: git+https://github.com/ramparte/amplifier-bundle-projector@main
+
+  # Session Discovery - index and search past sessions (distro tier 2 feature)
+  - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/session-discovery
 
   # Project Orchestration - natural language project management (NEW in v1.11.0)
   - behavior: git+https://github.com/ramparte/amplifier-bundle-project-orchestrator@main#subdirectory=behaviors/project-orchestration.yaml
