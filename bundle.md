@@ -45,6 +45,9 @@ includes:
 
   # Project Orchestration - natural language project management (NEW in v1.11.0)
   - behavior: git+https://github.com/ramparte/amplifier-bundle-project-orchestrator@main#subdirectory=behaviors/project-orchestration.yaml
+
+  # Daily Flow - personal daily workflow (/brief, /dispatch, /eod)
+  - bundle: ~/dev/ANext/amplifier-bundle-daily-flow
 ---
 
 # My Personal Amplifier
