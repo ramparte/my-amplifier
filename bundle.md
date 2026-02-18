@@ -47,7 +47,7 @@ includes:
   - behavior: git+https://github.com/ramparte/amplifier-bundle-project-orchestrator@main#subdirectory=behaviors/project-orchestration.yaml
 
   # Daily Flow - personal daily workflow (/brief, /dispatch, /eod)
-  - bundle: ~/dev/ANext/amplifier-bundle-daily-flow
+  - bundle: file:///home/samschillace/dev/ANext/amplifier-bundle-daily-flow
 ---
 
 # My Personal Amplifier
