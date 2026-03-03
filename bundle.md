@@ -13,11 +13,6 @@ tools:
   - module: attention_firewall
     source: ./tools/attention-firewall
 
-providers:
-  - module: provider-anthropic
-    config:
-      max_tokens: 16384
-
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
   # Includes: foundation → python-dev → lsp-python, shadow, recipes, all standard tools
