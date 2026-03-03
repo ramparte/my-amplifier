@@ -48,9 +48,6 @@ includes:
 
   # Daily Flow - personal daily workflow (/brief, /dispatch, /eod)
   - bundle: git+https://github.com/ramparte/amplifier-bundle-daily-flow@main
-
-  # Dev Machine - autonomous development machine builder (/admissions, /machine-design, /generate-machine)
-  - bundle: file:///home/samschillace/dev/ANext/amplifier-bundle-dev-machine
 ---
 
 # My Personal Amplifier
