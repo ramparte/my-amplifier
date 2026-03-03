@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.12.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + deliberate-development + made-support + user habits + amplifier-stories + attention-firewall + session-discovery + project-orchestration
+  version: 1.13.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + made-support + user habits + attention-firewall + session-discovery + project-orchestration
 
 config:
   allowed_write_dirs:
@@ -12,6 +12,11 @@ config:
 tools:
   - module: attention_firewall
     source: ./tools/attention-firewall
+
+providers:
+  - module: provider-anthropic
+    config:
+      max_tokens: 16384
 
 includes:
   # Amplifier-dev - stay current with Amplifier developments automatically
@@ -26,16 +31,10 @@ includes:
   
   # NOTE: python-dev and lsp-python removed - already included via amplifier-dev → foundation
   
-  # Deliberate development - decomposition-first workflow
-  # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-deliberate-development@main
-  
   # MADE support - file support requests from sessions
   # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
+  # NOTE: Also provides access to amplifier-stories agents via stories bundle dependency
   - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
-  
-  # Amplifier Stories - autonomous storytelling engine
-  - bundle: git+https://github.com/ramparte/amplifier-stories@master
   
   # Projector - cross-session project management, strategy enforcement, coordination
   - bundle: git+https://github.com/ramparte/amplifier-bundle-projector@main
@@ -48,11 +47,14 @@ includes:
 
   # Daily Flow - personal daily workflow (/brief, /dispatch, /eod)
   - bundle: git+https://github.com/ramparte/amplifier-bundle-daily-flow@main
+
+  # Dev Machine - autonomous development machine builder (/admissions, /machine-design, /generate-machine)
+  - bundle: file:///home/samschillace/dev/ANext/amplifier-bundle-dev-machine
 ---
 
 # My Personal Amplifier
 
-A thin bundle combining amplifier-dev with persistent dev-memory capabilities, deliberate development workflow, MADE support, user habits enforcement, M365 agent collaboration, and natural language project orchestration.
+A thin bundle combining amplifier-dev with persistent dev-memory capabilities, MADE support, user habits enforcement, and natural language project orchestration. Amplifier Stories available on-demand via agents (not loaded into root context).
 
 ## What's Included
 
@@ -78,20 +80,13 @@ A thin bundle combining amplifier-dev with persistent dev-memory capabilities, d
 - Semantic code intelligence via Python language server
 - Tools: `hover`, `goToDefinition`, `findReferences`, `incomingCalls`, `outgoingCalls`
 
-**From Deliberate Development:**
-- Decomposition-first planning (deliberate-planner agent)
-- Specification-based implementation (deliberate-implementer agent)
-
 **From MADE Support:**
 - File support requests directly from sessions
 - Just say "I need help with..." or "submit a support request"
 
-**From Amplifier Stories:**
-- Autonomous storytelling engine for Amplifier ecosystem
-- 10 specialist agents (story-researcher, content-strategist, technical-writer, etc.)
-- 5 content formats: HTML presentations, PowerPoint, Excel, Word, PDF
-- 4 automated workflows (session→case study, git tag→changelog, weekly digest, blog posts)
-- Create content manually or via automated recipes
+**Amplifier Stories (on-demand via agents):**
+- Say "use amplifier stories to..." and story agents are available via made-support
+- Not loaded into root context -- agents pull their own context when spawned
 
 **Attention Firewall:**
 - Query your notification firewall database conversationally
