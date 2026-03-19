@@ -130,6 +130,8 @@ Each task runs in a fresh isolated session automatically - no manual setup neede
 
 @my-amplifier:context/attention-firewall.md
 
+@my-amplifier:context/fleet-awareness.md
+
 ---
 
 @foundation:context/shared/common-system-base.md
