@@ -44,7 +44,7 @@ includes:
   - bundle: git+https://github.com/ramparte/amplifier-bundle-daily-flow@main
 
   # Dev Machine - autonomous development machine builder (/admissions, /machine-design, /generate-machine)
-  - bundle: file:///home/samschillace/dev/ANext/amplifier-bundle-dev-machine
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-dev-machine@main
 ---
 
 # My Personal Amplifier
