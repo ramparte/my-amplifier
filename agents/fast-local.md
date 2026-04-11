@@ -33,7 +33,7 @@ meta:
     </example>
   provider_preferences:
     - provider: openai
-      model: gemma-4-27b-it-4bit
+      model: gemma-4-31b-it-4bit
 ---
 
 # Fast Local Agent (oMLX)
