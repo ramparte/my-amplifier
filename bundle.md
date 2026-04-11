@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.13.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + made-support + user habits + attention-firewall + session-discovery + project-orchestration
+  version: 1.14.0
+  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + made-support + user habits + attention-firewall + session-discovery + project-orchestration + oMLX fast-local agent
 
 config:
   allowed_write_dirs:
@@ -45,6 +45,11 @@ includes:
 
   # Dev Machine - autonomous development machine builder (/admissions, /machine-design, /generate-machine)
   - bundle: git+https://github.com/ramparte/amplifier-bundle-dev-machine@main
+
+agents:
+  include:
+    # Fast local inference agent (oMLX on Mac Studio)
+    - my-amplifier:agents/fast-local
 ---
 
 # My Personal Amplifier
@@ -131,6 +136,8 @@ Each task runs in a fresh isolated session automatically - no manual setup neede
 @my-amplifier:context/attention-firewall.md
 
 @my-amplifier:context/fleet-awareness.md
+
+@my-amplifier:context/omlx-awareness.md
 
 ---
 
