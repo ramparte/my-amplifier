@@ -1,8 +1,8 @@
 ---
 bundle:
   name: my-amplifier
-  version: 1.14.0
-  description: Personal Amplifier with amplifier-dev + dev-memory + agent-memory + made-support + user habits + attention-firewall + session-discovery + project-orchestration + oMLX fast-local agent
+  version: 2.0.0
+  description: Optimized personal Amplifier. Uses exp-lean base (~18K tokens) instead of full amplifier-dev (~55K). Adds back superpowers, recipes, MADE support, team-knowledge, dev-memory, attention-firewall. Rollback available via my-amplifier-safe.
 
 config:
   allowed_write_dirs:
@@ -14,37 +14,53 @@ tools:
     source: ./tools/attention-firewall
 
 includes:
-  # Amplifier-dev - stay current with Amplifier developments automatically
-  # Includes: foundation → python-dev → lsp-python, shadow, recipes, all standard tools
-  - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=bundles/amplifier-dev.yaml
-  
-  # Dev-memory behavior - persistent local memory (thin, no foundation)
+  # ===== BASE: exp-lean-amplifier-dev (~18K tokens) =====
+  # Provides: core tools (fs, bash, web, search, todo, delegate, apply_patch),
+  # python-dev (ruff, pyright, LSP), 7 dev agents (explorer, bug-hunter, git-ops,
+  # zen-architect, modular-builder, file-ops, post-task-cleanup), UX hooks
+  # (streaming, status, redaction, logging, session-naming, todo), skills (visibility off).
+  # Compact system-base.md instead of 40K+ foundation context.
+  - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=experiments/exp-lean/exp-lean-amplifier-dev.md
+
+  # ===== ACTIVELY USED ADDITIONS =====
+
+  # Superpowers - modes, skills, brainstormer/implementer/plan-writer agents
+  # Usage: 2,353 delegations to superpowers agents in 14 days
+  - bundle: git+https://github.com/obra/amplifier-bundle-superpowers@main
+
+  # Recipes - multi-step workflow orchestration
+  # Usage: 1,056 recipe invocations in 14 days
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-recipes@main
+
+  # MADE support - file support requests + amplifier stories agents
+  # Usage: regular use for support filing and story creation
+  - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
+
+  # Team Knowledge - shared team knowledge base
+  # Usage: 549 calls in 14 days
+  - bundle: git+https://github.com/ramparte/amplifier-bundle-team-knowledge-base@main
+
+  # Dev-memory - persistent local memory across sessions
+  # Usage: 78 delegations to memory-retrieval in 14 days
+  # NOTE: Context-heavy (~7K tokens) - future optimization target
   - bundle: git+https://github.com/ramparte/amplifier-collection-dev-memory@main#subdirectory=behaviors/dev-memory.yaml
-  
+
   # Agent-memory - semantic memory with vector search
   - bundle: git+https://github.com/ramparte/amplifier-bundle-agent-memory@main
-  
-  # NOTE: python-dev and lsp-python removed - already included via amplifier-dev → foundation
-  
-  # MADE support - file support requests from sessions
-  # NOTE: This bundle needs its foundation include removed (thin bundle pattern for composition)
-  # NOTE: Also provides access to amplifier-stories agents via stories bundle dependency
-  - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
-  
-  # Projector - cross-session project management, strategy enforcement, coordination
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-projector@main
 
-  # Session Discovery - index and search past sessions (distro tier 2 feature)
-  - bundle: git+https://github.com/ramparte/amplifier-toolkit@main#subdirectory=bundles/session-discovery
-
-  # Project Orchestration - natural language project management (NEW in v1.11.0)
-  - behavior: git+https://github.com/ramparte/amplifier-bundle-project-orchestrator@main#subdirectory=behaviors/project-orchestration.yaml
-
-  # Daily Flow - personal daily workflow (/brief, /dispatch, /eod)
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-daily-flow@main
-
-  # Dev Machine - autonomous development machine builder (/admissions, /machine-design, /generate-machine)
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-dev-machine@main
+  # ===== DROPPED (available via delegation when needed) =====
+  # Projector:           0 direct tool calls, hook injected every turn for nothing
+  # Session-discovery:   0 direct delegations (naming handled by hooks in base)
+  # Project-orchestrator: 0 usage
+  # Daily-flow:          0 usage
+  # Dev-machine:         delegate to dev-machine:* agents directly when needed
+  # Dot-graph:           delegate to dot-graph:* agents directly when needed
+  # Browser-tester:      delegate to browser-tester:* agents directly when needed
+  # Design-intelligence: delegate to design-intelligence:* agents directly when needed
+  # Shadow environments: not included in exp-lean base; delegate when needed
+  #
+  # These agents still work via delegate(agent="dev-machine:admissions-advisor", ...)
+  # etc. -- they resolve from their git source without being in the root bundle.
 
 agents:
   include:
@@ -54,91 +70,52 @@ agents:
 
 # My Personal Amplifier
 
-A thin bundle combining amplifier-dev with persistent dev-memory capabilities, MADE support, user habits enforcement, and natural language project orchestration. Amplifier Stories available on-demand via agents (not loaded into root context).
+Optimized personal bundle. Uses exp-lean base for a compact system prompt (~18K tokens), with selective additions for actively-used capabilities.
 
 ## What's Included
 
-**From Amplifier-Dev:**
-- All standard tools (filesystem, bash, web, search, task delegation)
-- Session configuration and hooks
-- Access to all foundation agents (zen-architect, modular-builder, explorer, etc.)
-- Shadow environments for safe testing
-- Automatic updates when foundation evolves
+**Base (exp-lean-amplifier-dev):**
+- Core tools: filesystem, bash, web, search, todo, delegate, apply_patch
+- Python dev: ruff + pyright quality checks, LSP via pyright
+- Dev agents: explorer, bug-hunter, git-ops, zen-architect, modular-builder, file-ops, post-task-cleanup
+- UX hooks: streaming UI, status context, redaction, logging, session naming, todo display
+- Skills: available on-demand (visibility disabled to save ~1.2K tokens/turn)
 
-**From Dev-Memory:**
-- Persistent memory at `~/amplifier-dev-memory/`
-- Natural language: "remember this:", "what do you remember about X?"
-- Work tracking: "what was I working on?"
-- Token-efficient architecture (reads delegated to sub-agent)
+**Additions:**
+- Superpowers: brainstorm/debug/verify modes, implementer/plan-writer agents
+- Recipes: multi-step workflow orchestration
+- MADE Support: file support requests, amplifier stories agents
+- Team Knowledge: shared team knowledge base
+- Dev-Memory: persistent local memory ("remember this:", "what do you remember about X?")
+- Attention Firewall: query notification database ("check my WhatsApp groups")
+- Fast-local agent: oMLX inference on Mac Studio
 
-**From Python-Dev:**
-- Automated code quality checks (ruff format + lint, pyright types, stub detection)
-- Automatic hook runs after Python file writes
-- Manual invocation: `python_check(paths=["src/"])`
+## Available via Delegation (not in root context)
 
-**From LSP-Python:**
-- Semantic code intelligence via Python language server
-- Tools: `hover`, `goToDefinition`, `findReferences`, `incomingCalls`, `outgoingCalls`
+These aren't loaded at startup but work when you ask for them:
+- `delegate(agent="dev-machine:admissions-advisor", ...)` -- dev machine builder
+- `delegate(agent="dot-graph:dot-author", ...)` -- DOT graph authoring
+- `delegate(agent="browser-tester:browser-operator", ...)` -- browser automation
+- `delegate(agent="design-intelligence:component-designer", ...)` -- design system
+- `delegate(agent="foundation:session-analyst", ...)` -- session analysis/repair
 
-**From MADE Support:**
-- File support requests directly from sessions
-- Just say "I need help with..." or "submit a support request"
+## Rollback
 
-**Amplifier Stories (on-demand via agents):**
-- Say "use amplifier stories to..." and story agents are available via made-support
-- Not loaded into root context -- agents pull their own context when spawned
-
-**Attention Firewall:**
-- Query your notification firewall database conversationally
-- Check what notifications arrived and how they were filtered
-- Audit suppression rules to ensure correct filtering
-- Access dashboard location and recent notification history
-
-**Project Orchestration (NEW in v1.11.0):**
-- Natural language project management: "where are we?", "do phase X", "continue"
-- Fresh isolated sessions per task (automatic context isolation)
-- Persistent state across sessions (.project/state.json or .longbuilder/state/project_state.json)
-- Approval gates at strategic checkpoints
-- Automated test verification after each task
-- Phase-based execution with progress tracking
+If something breaks:
+```bash
+amplifier bundle use my-amplifier-safe   # full v1.14.0 bundle
+```
 
 ## Usage
 
 ```bash
-# Run directly
 amplifier run --bundle git+https://github.com/ramparte/my-amplifier@main
-
-# Or set as default in ~/.amplifier/settings.yaml:
-# bundle: git+https://github.com/ramparte/my-amplifier@main
 ```
-
-## Project Orchestration Commands (NEW)
-
-When working in a project directory with `.project/state.json` or `.longbuilder/state/project_state.json`:
-
-```
-> where are we?
-[Shows current phase, progress, next tasks]
-
-> do phase 1
-[Executes all pending tasks in Phase 1 with approval gates]
-
-> continue
-[Resumes from current state]
-```
-
-Each task runs in a fresh isolated session automatically - no manual setup needed!
 
 ---
 
 @my-amplifier:context/user-habits.md
 
-@my-amplifier:context/attention-firewall.md
-
 @my-amplifier:context/fleet-awareness.md
 
 @my-amplifier:context/omlx-awareness.md
-
----
-
-@foundation:context/shared/common-system-base.md
