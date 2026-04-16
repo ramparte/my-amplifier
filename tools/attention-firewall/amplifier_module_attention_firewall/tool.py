@@ -91,7 +91,7 @@ Available queries:
         notifications = cursor.execute("""
             SELECT timestamp, app_id, sender, title, body, rationale
             FROM notifications
-            WHERE action = 'SURFACE'
+            WHERE decision = 'surfaced'
             ORDER BY timestamp DESC
             LIMIT ?
         """, (limit,)).fetchall()
@@ -108,7 +108,7 @@ Available queries:
         notifications = cursor.execute("""
             SELECT timestamp, app_id, sender, title, body, rationale
             FROM notifications
-            WHERE action = 'SURFACE' AND timestamp > ?
+            WHERE decision = 'surfaced' AND timestamp > ?
             ORDER BY timestamp DESC
         """, (cutoff.isoformat(),)).fetchall()
         return {
@@ -126,7 +126,7 @@ Available queries:
         notifications = cursor.execute("""
             SELECT timestamp, app_id, sender, title, body, rationale
             FROM notifications
-            WHERE action = 'SUPPRESS' AND timestamp > ?
+            WHERE decision = 'suppressed' AND timestamp > ?
             ORDER BY timestamp DESC
         """, (cutoff.isoformat(),)).fetchall()
         by_reason: dict[str, int] = {}
@@ -149,9 +149,9 @@ Available queries:
         stats = cursor.execute("""
             SELECT
                 COUNT(*) as total,
-                SUM(CASE WHEN action = 'SURFACE' THEN 1 ELSE 0 END) as surfaced,
-                SUM(CASE WHEN action = 'DIGEST' THEN 1 ELSE 0 END) as digested,
-                SUM(CASE WHEN action = 'SUPPRESS' THEN 1 ELSE 0 END) as suppressed
+                SUM(CASE WHEN decision = 'surfaced' THEN 1 ELSE 0 END) as surfaced,
+                SUM(CASE WHEN decision = 'digest' THEN 1 ELSE 0 END) as digested,
+                SUM(CASE WHEN decision = 'suppressed' THEN 1 ELSE 0 END) as suppressed
             FROM notifications
             WHERE timestamp > ?
         """, (cutoff.isoformat(),)).fetchone()
@@ -180,15 +180,15 @@ Available queries:
         cursor = conn.cursor()
         cutoff = datetime.now() - timedelta(hours=hours)
         notifications = cursor.execute("""
-            SELECT timestamp, app_id, sender, title, body, action, rationale
+            SELECT timestamp, app_id, sender, title, body, decision, rationale
             FROM notifications
             WHERE timestamp > ?
             ORDER BY timestamp DESC
         """, (cutoff.isoformat(),)).fetchall()
         by_action: dict[str, int] = {}
         for n in notifications:
-            action = n["action"]
-            by_action[action] = by_action.get(action, 0) + 1
+            d = n["decision"]
+            by_action[d] = by_action.get(d, 0) + 1
         return {
             "query": "all",
             "hours": hours,
