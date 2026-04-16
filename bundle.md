@@ -26,7 +26,7 @@ includes:
 
   # Superpowers - modes, skills, brainstormer/implementer/plan-writer agents
   # Usage: 2,353 delegations to superpowers agents in 14 days
-  - bundle: git+https://github.com/obra/amplifier-bundle-superpowers@main
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-superpowers@main
 
   # Recipes - multi-step workflow orchestration
   # Usage: 1,056 recipe invocations in 14 days
