@@ -38,7 +38,7 @@ includes:
 
   # Team Knowledge - shared team knowledge base
   # Usage: 549 calls in 14 days
-  - bundle: git+https://github.com/ramparte/amplifier-bundle-team-knowledge-base@main
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-team-knowledge-base@main
 
   # Dev-memory - persistent local memory across sessions
   # Usage: 78 delegations to memory-retrieval in 14 days
