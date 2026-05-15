@@ -12,6 +12,14 @@ config:
 tools:
   - module: attention_firewall
     source: ./tools/attention-firewall
+  # Skills: re-declare tool-skills with additional skill sources
+  # NOTE: config.skills is a full replacement, not a merge — must re-include curated skills
+  - module: tool-skills
+    source: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=modules/tool-skills
+    config:
+      skills:
+        - "git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=skills"
+        - "git+https://github.com/ramparte/cranky-old-sam@main#subdirectory=skills"
 
 includes:
   # ===== BASE: exp-lean-amplifier-dev (~18K tokens) =====
