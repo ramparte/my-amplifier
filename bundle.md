@@ -1,13 +1,13 @@
 ---
 bundle:
   name: my-amplifier
-  version: 2.0.0
-  description: Optimized personal Amplifier. Uses exp-lean base (~18K tokens) instead of full amplifier-dev (~55K). Adds back superpowers, recipes, MADE support, team-knowledge, dev-memory, attention-firewall. Rollback available via my-amplifier-safe.
+  version: 3.0.0
+  description: Personal dev+writing bundle on the lean base. Composes BEHAVIORS (not root bundles) so added capabilities do NOT re-pull the full amplifier-foundation. See context/REDESIGN-NOTES.md for the full rationale, findings, and revert path.
 
 config:
   allowed_write_dirs:
-    - ~/amplifier-dev-memory
-    - ~/.amplifier/memory
+    - ~/amplifier-dev-memory      # dev-memory YAML store
+    - ~/.amplifier/memory         # agent-memory Qdrant store
 
 tools:
   - module: attention_firewall
@@ -21,54 +21,66 @@ tools:
         - "git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=skills"
         - "git+https://github.com/ramparte/cranky-old-sam@main#subdirectory=skills"
 
+# Force skills visibility OFF. Several composed behaviors (skills, superpowers,
+# made-support) declare tool-skills with visibility.enabled=true and the configs
+# accumulate. This override applies last and wins. load_skill() still works on
+# demand; persona skills remain discoverable by name / load_skill(search=...).
+overrides:
+  tool-skills:
+    config:
+      visibility:
+        enabled: false
+
 includes:
   # ===== BASE: exp-lean-amplifier-dev (~18K tokens) =====
-  # Provides: core tools (fs, bash, web, search, todo, delegate, apply_patch),
-  # python-dev (ruff, pyright, LSP), 7 dev agents (explorer, bug-hunter, git-ops,
-  # zen-architect, modular-builder, file-ops, post-task-cleanup), UX hooks
-  # (streaming, status, redaction, logging, session-naming, todo), skills (visibility off).
-  # Compact system-base.md instead of 40K+ foundation context.
+  # Core tools (fs, bash, web, search, todo, delegate, apply_patch), python-dev
+  # (ruff, pyright, LSP), 7 dev agents (explorer, bug-hunter, git-ops,
+  # zen-architect, modular-builder, file-ops, post-task-cleanup), UX hooks,
+  # tool-skills (visibility off), compact system-base.md. NO full foundation.
   - bundle: git+https://github.com/microsoft/amplifier-foundation@main#subdirectory=experiments/exp-lean/exp-lean-amplifier-dev.md
 
-  # ===== ACTIVELY USED ADDITIONS =====
+  # ===== ADDITIONS — BEHAVIORS ONLY (critical: behaviors do NOT re-pull foundation) =====
+  # The root superpowers/made-support bundles each `include: amplifier-foundation@main`,
+  # which drags in design-intelligence, browser-tester, amplifier-tester, DTU, gitea,
+  # llm-wiki, evaluation, routing-matrix + ~22K of heavy delegation context — negating
+  # the lean base. Their *behavior* subdirectories provide the same capabilities WITHOUT
+  # that pull-through. This is THE fix for the 200K+ sub-agent prompt bloat.
 
-  # Superpowers - modes, skills, brainstormer/implementer/plan-writer agents
-  # Usage: 2,353 delegations to superpowers agents in 14 days
-  - bundle: git+https://github.com/microsoft/amplifier-bundle-superpowers@main
+  # Superpowers methodology: brainstorm/write-plan/execute-plan/debug/verify/finish
+  # modes + implementer/spec-reviewer/code-quality-reviewer/code-reviewer/
+  # brainstormer/plan-writer agents. (Heavily used: ~2.3K delegations/14d.)
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-superpowers@main#subdirectory=behaviors/superpowers-methodology.yaml
 
-  # Recipes - multi-step workflow orchestration
-  # Usage: 1,056 recipe invocations in 14 days
-  - bundle: git+https://github.com/microsoft/amplifier-bundle-recipes@main
+  # MADE support behavior: support-ticket filing + amplifier-story submission +
+  # team-knowledge + made team skills. This ALSO provides:
+  #   - recipes  (via support-tickets + story-submissions sub-behaviors)
+  #   - team-knowledge  (via team-knowledge-base sub-behavior)
+  #   - stories (all 12 agents)  (via story-submissions -> stories behavior)
+  # Per redesign decision, recipes + team-knowledge are provided here rather than
+  # included directly (avoids the different-identity double-load). Stories agents
+  # MUST be registered: story recipes reference them by BARE name, so they cannot
+  # be delegate-only. amplifier-stories is the primary use case (52% of sessions).
+  - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main#subdirectory=behaviors/made-support.yaml
 
-  # MADE support - file support requests + amplifier stories agents
-  # Usage: regular use for support filing and story creation
-  - bundle: git+https://github.com/microsoft-amplifier/amplifier-bundle-made-support@main
+  # Curated skills collection (REQUIRED for persona reviewer skills: cranky-old-sam,
+  # crusty-old-engineer, personafy — the dominant load_skill usage on this machine).
+  # These live in amplifier-bundle-skills and previously arrived via the full
+  # foundation; now included explicitly. Visibility forced off by the override above.
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=behaviors/skills.yaml
 
-  # Team Knowledge - shared team knowledge base
-  # Usage: 549 calls in 14 days
-  - bundle: git+https://github.com/microsoft/amplifier-bundle-team-knowledge-base@main
-
-  # Dev-memory - persistent local memory across sessions
-  # Usage: 78 delegations to memory-retrieval in 14 days
-  # NOTE: Context-heavy (~7K tokens) - future optimization target
+  # ===== MEMORY (both kept — mechanically distinct, both actively used) =====
+  # dev-memory: offline YAML flat-file (~/amplifier-dev-memory), text scan, zero deps.
   - bundle: git+https://github.com/ramparte/amplifier-collection-dev-memory@main#subdirectory=behaviors/dev-memory.yaml
-
-  # Agent-memory - semantic memory with vector search
+  # agent-memory: Qdrant vector store (~/.amplifier/memory), semantic search.
   - bundle: git+https://github.com/ramparte/amplifier-bundle-agent-memory@main
 
-  # ===== DROPPED (available via delegation when needed) =====
-  # Projector:           0 direct tool calls, hook injected every turn for nothing
-  # Session-discovery:   0 direct delegations (naming handled by hooks in base)
-  # Project-orchestrator: 0 usage
-  # Daily-flow:          0 usage
-  # Dev-machine:         delegate to dev-machine:* agents directly when needed
-  # Dot-graph:           delegate to dot-graph:* agents directly when needed
-  # Browser-tester:      delegate to browser-tester:* agents directly when needed
-  # Design-intelligence: delegate to design-intelligence:* agents directly when needed
-  # Shadow environments: not included in exp-lean base; delegate when needed
-  #
-  # These agents still work via delegate(agent="dev-machine:admissions-advisor", ...)
-  # etc. -- they resolve from their git source without being in the root bundle.
+  # ===== DELEGATE-ONLY (NOT in root context; resolve from git source on demand) =====
+  # dot-graph:*, browser-tester:*, design-intelligence:*, dev-machine:*,
+  # foundation:session-analyst, digital-twin-universe:*, amplifier-tester:* all work
+  # via delegate(agent="<ns>:<agent>", ...) without being registered here.
+  # NOTE: dot-graph was also being force-injected into EVERY session via the global
+  # `bundle.app` list in ~/.amplifier/settings.yaml. That entry has been removed so
+  # dot-graph is genuinely delegate-only. (Kept under `bundle.added` so it resolves.)
 
 agents:
   include:
@@ -78,7 +90,15 @@ agents:
 
 # My Personal Amplifier
 
-Optimized personal bundle. Uses exp-lean base for a compact system prompt (~18K tokens), with selective additions for actively-used capabilities.
+Optimized personal bundle on the **lean base** (`exp-lean-amplifier-dev`, ~18K), composing
+only the capabilities this machine actually uses — added as **behaviors, not root bundles**,
+so they never re-pull the full `amplifier-foundation`.
+
+> **Why this matters:** including the *root* superpowers/made-support bundles silently dragged
+> in the entire foundation (design-intelligence, browser-tester, amplifier-tester, DTU, gitea,
+> llm-wiki, evaluation, routing-matrix + ~22K of delegation context), which is what pushed
+> spawned sub-agent prompts past 200K tokens. Composing their **behaviors** avoids this.
+> Full analysis, evidence, and revert instructions: `context/REDESIGN-NOTES.md`.
 
 ## What's Included
 
@@ -87,24 +107,24 @@ Optimized personal bundle. Uses exp-lean base for a compact system prompt (~18K 
 - Python dev: ruff + pyright quality checks, LSP via pyright
 - Dev agents: explorer, bug-hunter, git-ops, zen-architect, modular-builder, file-ops, post-task-cleanup
 - UX hooks: streaming UI, status context, redaction, logging, session naming, todo display
-- Skills: available on-demand (visibility disabled to save ~1.2K tokens/turn)
+- Skills: tool present, **visibility off** (forced via override) — `load_skill()` on demand
 
-**Additions:**
-- Superpowers: brainstorm/debug/verify modes, implementer/plan-writer agents
-- Recipes: multi-step workflow orchestration
-- MADE Support: file support requests, amplifier stories agents
-- Team Knowledge: shared team knowledge base
-- Dev-Memory: persistent local memory ("remember this:", "what do you remember about X?")
-- Attention Firewall: query notification database ("check my WhatsApp groups")
-- Fast-local agent: oMLX inference on Mac Studio
+**Additions (behaviors only — no foundation pull-through):**
+- **Superpowers methodology**: brainstorm/debug/verify/etc. modes + implementer/plan-writer/reviewer agents
+- **MADE Support**: support-ticket filing + amplifier-story submission — and it provides **recipes**, **team-knowledge**, and the **12 stories agents** transitively
+- **Curated skills collection**: persona reviewers (cranky-old-sam, crusty-old-engineer, personafy) + the standard skill library
+- **Dev-Memory**: offline YAML memory ("remember this:", "what do you remember about X?")
+- **Agent-Memory**: semantic vector memory (Qdrant)
+- **Attention Firewall**: query notification database
+- **Fast-local agent**: oMLX inference on Mac Studio
 
 ## Available via Delegation (not in root context)
 
-These aren't loaded at startup but work when you ask for them:
-- `delegate(agent="dev-machine:admissions-advisor", ...)` -- dev machine builder
+Work without being registered — resolve from their git source on demand:
 - `delegate(agent="dot-graph:dot-author", ...)` -- DOT graph authoring
 - `delegate(agent="browser-tester:browser-operator", ...)` -- browser automation
 - `delegate(agent="design-intelligence:component-designer", ...)` -- design system
+- `delegate(agent="dev-machine:admissions-advisor", ...)` -- dev machine builder
 - `delegate(agent="foundation:session-analyst", ...)` -- session analysis/repair
 
 ## Rollback
@@ -113,6 +133,7 @@ If something breaks:
 ```bash
 amplifier bundle use my-amplifier-safe   # full v1.14.0 bundle
 ```
+Or revert to the previous v2.0.0 composition — see `context/REDESIGN-NOTES.md`.
 
 ## Usage
 
