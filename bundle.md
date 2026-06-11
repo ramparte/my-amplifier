@@ -12,22 +12,21 @@ config:
 tools:
   - module: attention_firewall
     source: ./tools/attention-firewall
-  # Skills: re-declare tool-skills with additional skill sources
-  # NOTE: config.skills is a full replacement, not a merge — must re-include curated skills
+  # Skills: re-declare tool-skills at the ROOT (highest merge precedence) to (a) add
+  # extra skill sources and (b) force visibility OFF. The composed skills/superpowers/
+  # made-support behaviors set visibility:true and win over the lean base's false; this
+  # root declaration is intended to win over them. Skill SOURCES accumulate across
+  # declarations (verified: restless-old-brian/superpowers/etc. still appear), so
+  # personas survive regardless. load_skill() still works on demand.
+  # NOTE: a bundle-level `overrides:` key is NOT supported — overrides only work in
+  # ~/.amplifier/settings.yaml. If this root re-declaration does not win, the fallback
+  # is a settings.yaml override (see context/REDESIGN-NOTES.md).
   - module: tool-skills
     source: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=modules/tool-skills
     config:
       skills:
         - "git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=skills"
         - "git+https://github.com/ramparte/cranky-old-sam@main#subdirectory=skills"
-
-# Force skills visibility OFF. Several composed behaviors (skills, superpowers,
-# made-support) declare tool-skills with visibility.enabled=true and the configs
-# accumulate. This override applies last and wins. load_skill() still works on
-# demand; persona skills remain discoverable by name / load_skill(search=...).
-overrides:
-  tool-skills:
-    config:
       visibility:
         enabled: false
 
@@ -65,7 +64,7 @@ includes:
   # Curated skills collection (REQUIRED for persona reviewer skills: cranky-old-sam,
   # crusty-old-engineer, personafy — the dominant load_skill usage on this machine).
   # These live in amplifier-bundle-skills and previously arrived via the full
-  # foundation; now included explicitly. Visibility forced off by the override above.
+  # foundation; now included explicitly. Visibility forced off by the root tool-skills declaration above.
   - bundle: git+https://github.com/microsoft/amplifier-bundle-skills@main#subdirectory=behaviors/skills.yaml
 
   # ===== MEMORY (both kept — mechanically distinct, both actively used) =====

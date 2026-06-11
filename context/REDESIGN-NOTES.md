@@ -102,7 +102,11 @@ Both bundles expose **behaviors that do NOT re-include foundation**:
 - made-support: root bundle → `behaviors/made-support.yaml`
 - **removed** direct `recipes` and `team-knowledge-base` includes (now via made-support)
 - **added** `skills:behaviors/skills.yaml` (preserve persona skills after foundation cut)
-- **added** `overrides: tool-skills.config.visibility.enabled: false` (force visibility off)
+- **added** a ROOT-level `tool-skills` re-declaration with `visibility.enabled: false`
+  (force visibility off). NOTE: a bundle-level `overrides:` key is NOT supported — it is
+  silently ignored (only `~/.amplifier/settings.yaml` honors `overrides:`). Re-declaring the
+  module at the root is the portable mechanism; root config wins over included behaviors and
+  skill SOURCES still accumulate (verified empirically). Saves ~3.9K tokens/turn.
 - kept: dev-memory, agent-memory, attention_firewall tool, fast-local agent
 
 **`~/.amplifier/settings.yaml`** (NOT in this repo — machine-local):
