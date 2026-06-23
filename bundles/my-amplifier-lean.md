@@ -50,6 +50,18 @@ hooks:
                                  # this back to true; context_injection:false still gates
                                  # the dump off regardless)
 
+  # ===== INBOX-DRAIN: out-of-band notes into a running CLI session =====
+  # Companion sender `amplifier-note <tmux-window> <text>` appends notes to
+  # ~/.amplifier/inbox/<window>.jsonl. This hook drains THIS session's inbox
+  # (keyed by its own tmux window name) at provider:request -- the same safe
+  # checkpoint a soft Ctrl-C honors -- and injects them mid-task. Lets you nudge
+  # a busy pane without interrupting it or typing into it.
+  - module: hooks-inbox-drain
+    source: ../modules/hooks-inbox-drain
+    config:
+      inbox_dir: ~/.amplifier/inbox
+      priority: 5
+
 includes:
   # ===== BASE: exp-lean-amplifier-dev (~18K tokens) =====
   # Core tools (fs, bash, web, search, todo, delegate, apply_patch), python-dev
