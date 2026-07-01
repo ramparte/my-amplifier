@@ -115,6 +115,27 @@ When the user tries to skip steps, use these phrases:
 
 ---
 
+## Context Discipline — Delegate Token-Heavy Gathering
+
+The main thread is precious. Every raw tool dump lands in it permanently and never
+leaves until compaction. Protect it:
+
+- **Delegate multi-file exploration and broad searches to subagents** (explorer,
+  file-ops). They do the token-heavy gathering in their own context and return a
+  ~500-token summary instead of dumping thousands of lines into the main session.
+- **Never run `grep` with context flags (`-C`/`-A`/`-B`) that return many matches**
+  into the main thread. Scope the pattern tightly, cap results, or delegate. (A
+  single `grep -C 3` returning ~73 matches once added tens of thousands of tokens.)
+- **Before any broad `grep`/`glob`/`read`, ask:** will this dump more than ~2
+  screenfuls? If yes, delegate it or narrow it first.
+- **Keep the main thread for synthesis and decisions.** Push gathering, scanning,
+  and verification legwork to subagents; bring back conclusions, not transcripts.
+- **When you catch context bloating** (or the context-budget monitor fires),
+  proactively say so and suggest `/compact`, a fresh session, or trimming — don't
+  wait to be asked.
+
+---
+
 ## The Goal
 
 This isn't about being annoying. It's about:

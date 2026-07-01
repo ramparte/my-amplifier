@@ -1,25 +1,32 @@
 # pyright: reportMissingImports=false
-"""Token-warning hook: surface a CLI-visible warning when a turn's effective input
-token count crosses a configured budget.
+"""Token-warning hook: warn when a turn's effective input token count crosses a budget.
 
-Registers on ``llm:response`` -- emitted by the provider module after every LLM call
-with a normalized ``usage`` dict. ``usage.input_tokens`` on that event already reflects
-the entire prompt sent for that call (system + history + tools), so checking it per call
-is the correct granularity for a "context is getting large" warning.
+Delivery is a two-phase OBSERVE -> SURFACE pattern, dictated by a real constraint in
+the engine: ``llm:response`` (the only event carrying per-turn token usage) is a
+provider-emitted, fire-and-forget event -- the dispatcher discards whatever a handler
+returns, so a ``HookResult`` produced there (``user_message`` OR ``context_injection``)
+never reaches the CLI. ``provider:request`` return values, by contrast, ARE consumed and
+injected (this is exactly how the sibling ``hooks-inbox-drain`` works). So:
 
-The warning goes to the human via ``HookResult.user_message`` (UI-only; it does NOT
-touch the agent's context). It escalates once per budget band (see ``_logic.band_for``)
-so a long session is nudged at the budget and again each time context grows by another
-``step`` -- never every single turn.
+  1. OBSERVE on ``llm:response``: read the normalized ``usage`` dict, compute the
+     effective input size, and if it crosses a NEW budget band, stash a pending
+     warning. (The return value here is intentionally ignored by the engine.)
+  2. SURFACE on ``provider:request`` (fires at the start of the next LLM call): if a
+     warning is pending, inject it as an ephemeral ``<system-reminder>`` so the agent
+     sees it and relays it to the user, then clear it.
+
+Net effect: crossing the budget on turn N surfaces at the top of turn N+1 -- a one-turn
+deferral, which is fine for a budget nudge. Escalates once per band (see
+``_logic.band_for``): nudged at the budget and again each time context grows by another
+``step`` -- never every turn.
 
 Config knobs (all optional):
-    enabled:          bool  = True     -- master switch
-    threshold:        int   = 75000    -- budget in tokens
-    step:             int   = threshold -- re-warn interval above the budget
-    count_cache_read: bool  = False    -- add cache-read tokens (see _logic docstring)
-    count_cache_write:bool  = True     -- add cache-write/creation tokens
-    user_message_level:str  = "warning" -- "info" | "warning" | "error"
-    priority:         int   = 50
+    enabled:           bool = True      -- master switch
+    threshold:         int  = 75000     -- budget in tokens
+    step:              int  = threshold -- re-warn interval above the budget
+    count_cache_read:  bool = False     -- add cache-read tokens (see _logic docstring)
+    count_cache_write: bool = True      -- add cache-write/creation tokens
+    priority:          int  = 60        -- handler priority for both events
 """
 
 from __future__ import annotations
@@ -42,11 +49,20 @@ async def mount(coordinator: ModuleCoordinator, config: dict[str, Any] | None = 
         logger.info("hooks-token-warning disabled via config; not registering")
         return
     hook = TokenWarningHook(coordinator, config)
+    priority = int(config.get("priority", 60))
+    # OBSERVE: record usage after each LLM call (return value ignored by the engine).
     coordinator.hooks.register(
         "llm:response",
         hook.on_llm_response,
-        priority=int(config.get("priority", 50)),
-        name="hooks-token-warning",
+        priority=priority,
+        name="hooks-token-warning-observe",
+    )
+    # SURFACE: inject any pending warning at the start of the next LLM call.
+    coordinator.hooks.register(
+        "provider:request",
+        hook.on_provider_request,
+        priority=priority,
+        name="hooks-token-warning-surface",
     )
     logger.info(
         "Mounted hooks-token-warning (threshold=%d, step=%d)",
@@ -62,12 +78,14 @@ class TokenWarningHook:
         self.step = int(config.get("step", self.threshold) or self.threshold)
         self.count_cache_read = bool(config.get("count_cache_read", False))
         self.count_cache_write = bool(config.get("count_cache_write", True))
-        self.level = str(config.get("user_message_level", "warning"))
         # Highest band we've already warned about this session (hysteresis: only
         # warn when we cross UP into a new band, never repeat the same band).
         self._last_warned_band = 0
+        # A one-line warning waiting to be surfaced on the next provider:request.
+        self._pending_warning: str | None = None
 
     async def on_llm_response(self, event: str, data: dict[str, Any]) -> HookResult:
+        """OBSERVE phase: record usage; queue a warning when a new band is crossed."""
         try:
             usage = data.get("usage")
             if not isinstance(usage, dict):
@@ -82,22 +100,43 @@ class TokenWarningHook:
 
             if band > self._last_warned_band:
                 self._last_warned_band = band
+                self._pending_warning = format_warning(
+                    effective, self.threshold, data.get("model")
+                )
                 logger.info(
-                    "hooks-token-warning: effective input %d crossed budget %d (band %d)",
+                    "hooks-token-warning: effective input %d crossed budget %d "
+                    "(band %d); queued for next provider:request",
                     effective,
                     self.threshold,
                     band,
                 )
-                return HookResult(
-                    action="continue",
-                    user_message=format_warning(
-                        effective, self.threshold, data.get("model")
-                    ),
-                    user_message_level=self.level,
-                    user_message_source="hooks-token-warning",
-                )
-
-            return HookResult(action="continue")
         except Exception:  # never break a turn over a warning
-            logger.exception("hooks-token-warning: check failed; continuing")
+            logger.exception("hooks-token-warning: observe failed; continuing")
+        return HookResult(action="continue")
+
+    async def on_provider_request(self, event: str, data: dict[str, Any]) -> HookResult:
+        """SURFACE phase: inject any queued warning as an ephemeral system-reminder."""
+        try:
+            if not self._pending_warning:
+                return HookResult(action="continue")
+            warning = self._pending_warning
+            self._pending_warning = None
+            injection = (
+                '<system-reminder source="hooks-token-warning">\n'
+                f"{warning}\n"
+                "Surface this to the user in your next message and suggest they run "
+                "/compact, start a fresh session, or trim context. This is a system "
+                "notice about context size, not user input.\n"
+                "</system-reminder>"
+            )
+            logger.info("hooks-token-warning: surfacing queued budget warning")
+            return HookResult(
+                action="inject_context",
+                context_injection=injection,
+                context_injection_role="user",
+                ephemeral=True,
+                suppress_output=True,
+            )
+        except Exception:  # never break a turn over a warning
+            logger.exception("hooks-token-warning: surface failed; continuing")
             return HookResult(action="continue")
