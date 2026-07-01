@@ -62,6 +62,22 @@ hooks:
       inbox_dir: ~/.amplifier/inbox
       priority: 5
 
+  # ===== TOKEN-WARNING: early warning when context bloats =====
+  # Registers on llm:response and reads the normalized per-turn usage dict. When a
+  # turn's effective input crosses the budget it emits a CLI-visible warning (via
+  # HookResult.user_message -- UI only, does NOT touch the agent's context) and
+  # re-warns once per additional `step` of growth (no per-turn spam). This is the
+  # runtime safety net against the 200K-600K bloat regression: it fires regardless
+  # of WHAT caused the bloat. `effective = input_tokens + cache_write_tokens`
+  # (cache_read is already folded into input_tokens by the Anthropic provider).
+  - module: hooks-token-warning
+    source: ../modules/hooks-token-warning
+    config:
+      threshold: 75000          # budget in tokens
+      # step defaults to threshold -> re-warn at 75K, 150K, 225K, ...
+      user_message_level: warning
+      priority: 50
+
 includes:
   # ===== BASE: exp-lean-amplifier-dev (~18K tokens) =====
   # Core tools (fs, bash, web, search, todo, delegate, apply_patch), python-dev

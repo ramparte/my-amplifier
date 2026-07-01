@@ -1,0 +1,16 @@
+[project]
+name = "amplifier-module-hooks-token-warning"
+version = "1.0.0"
+description = "Warn (CLI-visible) when a turn's effective input token count crosses a configured budget"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.entry-points."amplifier.modules"]
+hooks-token-warning = "amplifier_module_hooks_token_warning:mount"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["amplifier_module_hooks_token_warning"]

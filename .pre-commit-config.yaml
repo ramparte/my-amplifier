@@ -1,0 +1,40 @@
+# Pre-commit guards for the lean bundle. Install once with:  pre-commit install
+# (requires the `pre-commit` tool: `pipx install pre-commit` or `pip install pre-commit`)
+#
+# These hooks encode the two durable defenses against the 200K-600K context-bloat
+# regression documented in .amplifier/context/lean-audit-handoff.md:
+#   1. the token-warning module's logic stays correct (unit tests), and
+#   2. the lean bundle never (re)composes the full amplifier-foundation bundle.
+repos:
+  - repo: local
+    hooks:
+      # Pure-logic unit tests for the token-budget warning hook. Framework-free,
+      # so they run under the system interpreter with no install.
+      - id: token-warning-logic-tests
+        name: token-warning logic tests
+        entry: python3 modules/hooks-token-warning/tests/test_logic.py
+        language: system
+        pass_filenames: false
+        files: ^modules/hooks-token-warning/
+        always_run: false
+
+      # Registry-free source scan: fail if any changed bundle file bare-includes the
+      # full amplifier-foundation (i.e. without a #subdirectory= scope). pre-commit
+      # appends the changed bundle filenames to the command.
+      - id: lean-no-foundation-static
+        name: lean bundle must not bare-include full foundation (static)
+        entry: python3 scripts/check-lean-no-foundation.py --static
+        language: system
+        pass_filenames: true
+        files: ^(bundle\.md|bundles/.*\.md)$
+
+      # Graph check against the locally-materialized ~/.amplifier/registry.json. On a
+      # dev machine (where the registry exists) this catches transitive foundation
+      # composition from ANY vector, including a settings.yaml `app:` layer. In
+      # environments with no registry it is a graceful no-op.
+      - id: lean-no-foundation-graph
+        name: lean bundle must not transitively compose foundation (registry graph)
+        entry: python3 scripts/check-lean-no-foundation.py my-amplifier-lean --allow-missing-registry
+        language: system
+        pass_filenames: false
+        always_run: true

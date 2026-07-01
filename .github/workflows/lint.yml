@@ -1,0 +1,34 @@
+name: lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 1. Token-budget warning hook: pure-logic unit tests (framework-free).
+      - name: token-warning logic tests
+        run: python3 modules/hooks-token-warning/tests/test_logic.py
+
+      # 2. Lean bundle guard (registry-free static scan). CI has no materialized
+      #    ~/.amplifier/registry.json, so we scan the bundle SOURCE files for any
+      #    bare full-amplifier-foundation include (one without a #subdirectory= scope).
+      - name: lean bundle must not bare-include full foundation
+        run: |
+          python3 scripts/check-lean-no-foundation.py --static bundle.md bundles/*.md
+
+      # 3. Lightweight code-quality gate on the new code.
+      - name: ruff (format + lint)
+        run: |
+          pip install ruff
+          ruff format --check scripts modules/hooks-token-warning
+          ruff check scripts modules/hooks-token-warning
