@@ -1,0 +1,95 @@
+# macstudio-local-provider — BACKUP / REFERENCE (not an active bundle)
+#
+# Snapshot of the local-model serving + routing setup on `macstudio`
+# (Apple M4 Max, 128 GB, Tailscale 100.79.85.60, user `sam`).
+# Restore-by-hand reference; the live config lives in the Mac's
+# ~/.amplifier/settings.yaml and its launchd plists. Companion swap script:
+# configs/local-profile.sh  ->  deployed to the Mac at ~/.local/bin/local-profile
+#
+# Active default bundle on the Mac: my-amplifier-lean (small prompt; suits the
+# weaker local memory arch). Routing.overrides are honored at runtime under lean
+# (verified: `amplifier run` on the general role loaded qwen3-coder-next 100% GPU).
+
+endpoints:
+  ollama:   http://localhost:11434     # 15->11 model Ollama (native + OpenAI /v1)
+  omlx:     http://localhost:8000/v1   # MLX server, SSD KV cache (the fast-local path)
+  # Reachable over Tailscale at 100.79.85.60:{11434,8000} (both bind 0.0.0.0).
+
+providers:  # ~/.amplifier/settings.yaml -> config.providers
+  - module: provider-ollama
+    source: git+https://github.com/microsoft/amplifier-module-provider-ollama@main
+    config:
+      host: http://localhost:11434
+      default_model: qwen3-coder-next:latest   # set by local-profile (workhorse)
+      auto_pull: "false"
+      num_ctx: "131072"
+      timeout: "600"
+      priority: 1
+  - module: provider-openai        # points at oMLX, NOT api.openai.com
+    source: git+https://github.com/microsoft/amplifier-module-provider-openai@main
+    config:
+      base_url: http://localhost:8000/v1
+      api_key: not-needed
+      default_model: gemma-4-31b-it-4bit
+      priority: 2
+      timeout: "600"
+
+# --- launchd fixes applied on the Mac ---------------------------------------
+omlx_launchd:                # ~/Library/LaunchAgents/local.omlx.plist
+  fix: "added `--host 0.0.0.0` to ProgramArguments so oMLX is reachable over Tailscale"
+  args: [omlx, serve, --host, 0.0.0.0, --model-dir, /Volumes/ai-storage/models/omlx,
+         --port, 8000, --paged-ssd-cache-dir, /Volumes/ai-storage/models/omlx/.cache]
+ollama_launchd:              # ~/ollama-start.sh (run by local.ollama.plist)
+  env:
+    OLLAMA_MODELS: /Volumes/ai-storage/models/ollama
+    OLLAMA_HOST: http://0.0.0.0:11434
+    OLLAMA_FLASH_ATTENTION: "true"
+    OLLAMA_KV_CACHE_TYPE: q8_0
+    OLLAMA_KEEP_ALIVE: "-1"          # never unload -> keep workhorse resident (anti-thrash)
+    OLLAMA_MAX_LOADED_MODELS: "3"    # workhorse + secondary + vision can co-reside in 128 GB
+
+# --- two swappable profiles (thrash-avoidance: keep ONE big model resident) --
+# Swap with:  local-profile coder   |   local-profile reasoner   (new sessions only)
+profiles:
+  coder:      # workhorse qwen3-coder-next:79B hot for general/coding/reasoning/...
+    general: qwen3-coder-next:latest
+    coding: qwen3-coder-next:latest
+    ui-coding: qwen3-coder-next:latest
+    reasoning: qwen3-coder-next:latest
+    research: qwen3-coder-next:latest
+    critique: qwen3-coder-next:latest
+    critical-ops: qwen3-coder-next:latest
+    security-audit: qwen3-coder-next:latest
+    writing: qwen3.5:35b
+    creative: qwen3.5:35b
+    fast: gemma4:e4b
+    vision: qwen3-vl:32b
+  reasoner:   # deepseek-r1:70B hot; gpt-oss:120b auto-takes-over once pulled
+    general: [gpt-oss:120b, deepseek-r1:70b]
+    reasoning: [gpt-oss:120b, "deepseek-r1:70b (reasoning_effort:high)"]
+    research: [gpt-oss:120b, deepseek-r1:70b]
+    critique: deepseek-r1:70b
+    critical-ops: deepseek-r1:70b
+    security-audit: deepseek-r1:70b
+    coding: gpt-oss:20b
+    ui-coding: gpt-oss:20b
+    writing: qwen3.5:35b
+    creative: qwen3.5:35b
+    fast: gemma4:e4b
+    vision: qwen3-vl:32b
+  # image-gen: intentionally unset (no local image model).
+
+installed_models:            # after prune (2026-07-03); disk on /Volumes/ai-storage (3.6TB)
+  - qwen3-coder-next:latest    # 51 GB  coder workhorse
+  - deepseek-r1:70b            # 42 GB  reasoner workhorse / fallback
+  - glm-4.7-flash:q8_0         # 31 GB
+  - qwen3.5:35b                # 23 GB  (Q4; Q8 a3b variant pruned)
+  - qwen3-vl:32b               # 20 GB  vision
+  - gemma4:31b                 # 19 GB
+  - qwen3-coder:30b            # 18 GB
+  - mistral-small3.2:latest    # 15 GB
+  - gpt-oss:20b                # 13 GB  small coder / reasoner
+  - gemma4:e4b                 # 9.6 GB fast/utility
+  - nomic-embed-text:latest    # 0.3 GB embeddings
+  # pruned: llama3.3:70b, cogito:70b, qwen3:32b, qwen3:8b, qwen3.5:35b-a3b-q8_0
+  # NOT yet present: gpt-oss:120b (download repeatedly times out on Cloudflare R2)
