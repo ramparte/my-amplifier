@@ -27,6 +27,31 @@ tools:
       visibility:
         enabled: false
 
+# ===== COMPACTION TUNING: fire earlier, visibly, within the real model window =====
+# Upstream (foundation lean-foundation.yaml) declares, at session.context.config:
+#   max_tokens: 300000, compact_threshold: 0.8, auto_compact: true
+# Problem: max_tokens 300K exceeds the real Opus context window (~200K), so the
+# 0.8 trigger (~240K) sits above the ceiling and effectively never fires.
+# `auto_compact` is dead/inert (never read by context-simple) - do not rely on it.
+#
+# `session` is a plain dict field on the Bundle dataclass. Bundle.merge() combines
+# it via a generic recursive deep_merge (amplifier_foundation.dicts.merge.deep_merge)
+# - NOT the list-by-module-id merge used for hooks/tools/providers (that mechanism
+# only applies to list-typed fields). Because `session` is composed the same way
+# as every other frontmatter field - later bundle in the merge order wins, same as
+# the hooks override below - re-declaring the identical key path
+# (session.context.config) in THIS document's own frontmatter makes it the late
+# "child" that overrides the value pulled in via `includes:`, exactly as the hooks
+# re-declaration below overrides team-knowledge.yaml's hook config. Only the four
+# keys below are touched; `module`/`source`/`auto_compact` merge through unchanged.
+session:
+  context:
+    config:
+      max_tokens: 200000               # real Opus window ceiling (was 300000, above actual 200K)
+      compact_threshold: 0.7            # fires at ~140K tokens - comfortably inside the window
+      compaction_notice_enabled: true   # surface a visible notice when compaction fires
+      compaction_notice_min_level: 1
+
 # ===== THE LEAN FIX: kill the per-turn KB dump, keep the tool =====
 # made-support -> team-knowledge-base -> upstream team-knowledge.yaml declares the
 # `hooks-team-knowledge-context` hook, which on session:start injects a team summary
@@ -62,21 +87,21 @@ hooks:
       inbox_dir: ~/.amplifier/inbox
       priority: 5
 
-  # ===== TOKEN-WARNING: early warning when context bloats =====
-  # Registers on llm:response and reads the normalized per-turn usage dict. When a
-  # turn's effective input crosses the budget it emits a CLI-visible warning (via
-  # HookResult.user_message -- UI only, does NOT touch the agent's context) and
-  # re-warns once per additional `step` of growth (no per-turn spam). This is the
-  # runtime safety net against the 200K-600K bloat regression: it fires regardless
-  # of WHAT caused the bloat. `effective = input_tokens + cache_write_tokens`
-  # (cache_read is already folded into input_tokens by the Anthropic provider).
-  - module: hooks-token-warning
-    source: ../modules/hooks-token-warning
+  # ===== DELEGATE-RATIO: LOG-ONLY subagent-usage instrument =====
+  # Records, once per session (on session:end), how much of the session's own
+  # work was delegated to subagents (tool_name == "delegate") vs. done directly
+  # via heavy tools (read_file/grep/glob/bash). Appends ONE line per session to
+  # ~/.amplifier/delegate-ratio.log. LOG-ONLY: no context injection, no
+  # system-reminder, no per-turn hook of any kind -- fires once at session end.
+  # See modules/hooks-delegate-ratio/amplifier_module_hooks_delegate_ratio/__init__.py
+  # for the full design-constraint rationale.
+  - module: hooks-delegate-ratio
+    source: ../modules/hooks-delegate-ratio
     config:
-      threshold: 75000          # budget in tokens
-      # step defaults to threshold -> re-warn at 75K, 150K, 225K, ...
-      user_message_level: warning
-      priority: 50
+      log_path: ~/.amplifier/delegate-ratio.log
+      ratio_flag_threshold: 0.40
+      heavy_flag_min: 8
+      priority: 60
 
 includes:
   # ===== BASE: exp-lean-amplifier-dev (~18K tokens) =====

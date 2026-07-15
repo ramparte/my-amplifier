@@ -130,9 +130,6 @@ leaves until compaction. Protect it:
   screenfuls? If yes, delegate it or narrow it first.
 - **Keep the main thread for synthesis and decisions.** Push gathering, scanning,
   and verification legwork to subagents; bring back conclusions, not transcripts.
-- **When you catch context bloating** (or the context-budget monitor fires),
-  proactively say so and suggest `/compact`, a fresh session, or trimming — don't
-  wait to be asked.
 
 ---
 
