@@ -58,7 +58,11 @@ async def mount(coordinator: ModuleCoordinator, config: dict[str, Any] | None = 
         priority=int(config.get("priority", 5)),
         name="hooks-inbox-drain",
     )
-    logger.info("Mounted hooks-inbox-drain (inbox_dir=%s)", hook.inbox_dir)
+    logger.info(
+        "Mounted hooks-inbox-drain (inbox_dir=%s, sub_session=%s)",
+        hook.inbox_dir,
+        hook._is_sub_session(),
+    )
 
 
 class InboxDrainHook:
@@ -67,6 +71,18 @@ class InboxDrainHook:
         self.inbox_dir = Path(config.get("inbox_dir", DEFAULT_INBOX_DIR)).expanduser()
         self.forced_window = config.get("window_name")  # testing / non-tmux override
         self.role = config.get("role", "user")
+
+    def _is_sub_session(self) -> bool:
+        """True when this session is a forked sub-session (subagent).
+
+        The runtime sets ``coordinator.parent_id`` to the parent's session id for
+        child sessions and leaves it ``None`` for the top-level session. Subagents
+        share the top-level pane's tmux window AND also fire ``provider:request``,
+        so without this guard a note addressed to the top-level "butler" gets
+        stolen by whatever subagent happens to be mid-turn. Only the top-level
+        session should drain the inbox.
+        """
+        return getattr(self.coordinator, "parent_id", None) is not None
 
     def _inbox_file(self) -> Path | None:
         window = _resolve_window_name(self.forced_window)
@@ -136,13 +152,20 @@ class InboxDrainHook:
 
     async def on_provider_request(self, event: str, data: dict[str, Any]) -> HookResult:
         try:
+            # Phase 0 (notes-unification): subagents never drain. A forked
+            # sub-session shares the top-level pane's tmux window, so draining
+            # here would steal notes meant for the top-level session.
+            if self._is_sub_session():
+                return HookResult(action="continue")
             inbox = self._inbox_file()
             if inbox is None or not inbox.exists():
                 return HookResult(action="continue")
             notes = self._drain(inbox)
             if not notes:
                 return HookResult(action="continue")
-            logger.info("hooks-inbox-drain: injecting %d note(s) from %s", len(notes), inbox)
+            logger.info(
+                "hooks-inbox-drain: injecting %d note(s) from %s", len(notes), inbox
+            )
             return HookResult(
                 action="inject_context",
                 context_injection=self._format(notes),
