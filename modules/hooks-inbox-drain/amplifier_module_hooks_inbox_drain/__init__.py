@@ -84,11 +84,53 @@ class InboxDrainHook:
         """
         return getattr(self.coordinator, "parent_id", None) is not None
 
+    def _own_session_id(self) -> str | None:
+        """This session's own stable id (Phase 2 routing key)."""
+        sid = getattr(self.coordinator, "session_id", None)
+        return str(sid) if sid else None
+
     def _inbox_file(self) -> Path | None:
+        """Legacy window-keyed inbox file (still the dashboard/legacy channel)."""
         window = _resolve_window_name(self.forced_window)
         if not window:
             return None
         return self.inbox_dir / f"{_safe_filename(window)}.jsonl"
+
+    def _session_inbox_file(self, own_id: str | None) -> Path | None:
+        """Session-id-keyed inbox file (Phase 2: notes addressed by session id)."""
+        if not own_id:
+            return None
+        return self.inbox_dir / f"{_safe_filename(own_id)}.jsonl"
+
+    @staticmethod
+    def _accepts(note: dict[str, Any], own_id: str | None) -> bool:
+        """Does this session own a note found in the *window* channel?
+
+        A note with no ``target_session`` (legacy / dashboard) is accepted by the
+        window's session (backward compatible). A note stamped with a specific
+        ``target_session`` is accepted only by that session; otherwise it is left
+        for the right one -- this is what stops window-name collisions (problem
+        (b)) from misrouting. If this hook can't resolve its own id, fall back to
+        legacy behavior (accept all) rather than starve.
+        """
+        target = note.get("target_session")
+        if target is None or own_id is None:
+            return True
+        return str(target) == own_id
+
+    def _requeue(self, inbox: Path, notes: list[dict[str, Any]]) -> None:
+        """Append notes not addressed to us back onto the window inbox so the
+        correct session can claim them on its next turn."""
+        if not notes:
+            return
+        try:
+            with open(inbox, "a", encoding="utf-8") as fh:
+                for n in notes:
+                    fh.write(json.dumps(n, separators=(",", ":")) + "\n")
+        except OSError:
+            logger.exception(
+                "hooks-inbox-drain: failed to requeue %d note(s)", len(notes)
+            )
 
     def _drain(self, inbox: Path) -> list[dict[str, Any]]:
         # Atomic claim: rename out from under any concurrent appender, then read,
@@ -157,14 +199,35 @@ class InboxDrainHook:
             # here would steal notes meant for the top-level session.
             if self._is_sub_session():
                 return HookResult(action="continue")
-            inbox = self._inbox_file()
-            if inbox is None or not inbox.exists():
-                return HookResult(action="continue")
-            notes = self._drain(inbox)
+
+            own_id = self._own_session_id()
+            notes: list[dict[str, Any]] = []
+
+            # Phase 2: session-id channel -- a file keyed by our own session id.
+            # Everything here was addressed to us by stable id; take it all.
+            sid_inbox = self._session_inbox_file(own_id)
+            if sid_inbox is not None and sid_inbox.exists():
+                notes.extend(self._drain(sid_inbox))
+
+            # Legacy window channel -- keep for the dashboard/notes-watcher and
+            # any old sender. Filter by target_session: notes with no target
+            # (legacy) or ours -> inject; notes stamped for a different session
+            # -> requeue so the right session gets them.
+            win_inbox = self._inbox_file()
+            if win_inbox is not None and win_inbox.exists():
+                drained = self._drain(win_inbox)
+                mine = [n for n in drained if self._accepts(n, own_id)]
+                others = [n for n in drained if not self._accepts(n, own_id)]
+                if others:
+                    self._requeue(win_inbox, others)
+                notes.extend(mine)
+
             if not notes:
                 return HookResult(action="continue")
             logger.info(
-                "hooks-inbox-drain: injecting %d note(s) from %s", len(notes), inbox
+                "hooks-inbox-drain: injecting %d note(s) (session=%s)",
+                len(notes),
+                own_id,
             )
             return HookResult(
                 action="inject_context",
