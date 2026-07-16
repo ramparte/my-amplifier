@@ -152,6 +152,11 @@ def main(argv: list[str] | None = None) -> int:
         "--window", dest="window_flag", default=None, help="target tmux window NAME"
     )
     p.add_argument(
+        "--origin",
+        default="cli",
+        help="provenance tag for the note (e.g. cli, dashboard)",
+    )
+    p.add_argument(
         "--here",
         action="store_true",
         help="target the session in the CURRENT tmux pane",
@@ -230,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
         "priority": args.priority,
         "label": args.label,
         "text": text,
-        "origin": "cli",
+        "origin": args.origin,
         "target_session": target_session,
         "target_window": target_window,
     }
