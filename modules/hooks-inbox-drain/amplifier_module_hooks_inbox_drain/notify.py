@@ -42,6 +42,14 @@ DEFAULT_INBOX_DIR = "~/.amplifier/inbox"
 DEFAULT_PANE_SESSIONS = "~/.amplifier/pane-sessions.tsv"
 PRIORITIES = ["info", "low", "med", "high", "critical"]
 
+# Recorder confidence levels that identify a pane's session EXACTLY. Anything
+# else ("active-mtime", "ambiguous", "unknown") is a freshest-mtime guess keyed
+# on the pane's cwd -- when several panes share one cwd (e.g. an HQ fleet all
+# running in the same project dir) they ALL collapse to whichever session wrote
+# last, so stamping such a guess as target_session MISROUTES the note (it gets
+# requeued forever by the real window session and never read by the stamped one).
+TRUSTED_CONFIDENCE = {"exact", "beacon", "probed"}
+
 
 def _safe_filename(label: str) -> str:
     return label.replace(os.sep, "_").strip()
@@ -53,10 +61,10 @@ def _safe_filename(label: str) -> str:
 # ISO8601-Z timestamps sort lexicographically == chronologically, so "newest
 # row wins" (the recorder's own ambiguity policy: most-recently-active).
 # ---------------------------------------------------------------------------
-def _pane_rows(pane_sessions: Path) -> list[tuple[str, str, str, str]]:
+def _pane_rows(pane_sessions: Path) -> list[tuple[str, str, str, str, str]]:
     if not pane_sessions.exists():
         return []
-    rows: list[tuple[str, str, str, str]] = []
+    rows: list[tuple[str, str, str, str, str]] = []
     for ln in pane_sessions.read_text(encoding="utf-8").splitlines():
         ln = ln.rstrip("\n")
         if not ln or ln.startswith("#"):
@@ -65,23 +73,41 @@ def _pane_rows(pane_sessions: Path) -> list[tuple[str, str, str, str]]:
         if len(parts) < 3:
             continue
         window, _cwd, uuid = parts[0], parts[1], parts[2]
+        confidence = parts[3] if len(parts) > 3 else ""
         ts = parts[4] if len(parts) > 4 else ""
-        rows.append((window, uuid, ts, _cwd))
+        rows.append((window, uuid, ts, _cwd, confidence))
     return rows
 
 
 def _window_to_session(window: str, pane_sessions: Path) -> str | None:
+    """Window name -> session_uuid, ONLY when the mapping is trustworthy.
+
+    Returns None (-> note ships unstamped on the window channel, claimable by
+    whatever session actually lives in that window) rather than stamp a guess.
+    A guessed stamp is worse than none: the drain hook requeues stamped notes
+    that aren't its own, so a wrong stamp dead-letters the note forever.
+    """
+    rows = _pane_rows(pane_sessions)
     cands = [
-        (ts, uuid) for (w, uuid, ts, _c) in _pane_rows(pane_sessions) if w == window
+        (conf in TRUSTED_CONFIDENCE, ts, uuid, conf, cwd)
+        for (w, uuid, ts, cwd, conf) in rows
+        if w == window
     ]
     if not cands:
         return None
-    cands.sort()  # newest iso timestamp last
-    return cands[-1][1]
+    cands.sort()  # trusted rows beat guesses; then newest iso timestamp last
+    trusted, _ts, uuid, _conf, cwd = cands[-1]
+    if trusted:
+        return uuid
+    # Untrusted (mtime-guess) row: only usable when its cwd is UNIQUE among
+    # recorded panes -- with a single candidate session dir the guess is sound.
+    if sum(1 for (_w, _u, _t, c, _cf) in rows if c == cwd) > 1:
+        return None
+    return uuid
 
 
 def _session_to_window(uuid: str, pane_sessions: Path) -> str | None:
-    cands = [(ts, w) for (w, u, ts, _c) in _pane_rows(pane_sessions) if u == uuid]
+    cands = [(ts, w) for (w, u, ts, _c, _cf) in _pane_rows(pane_sessions) if u == uuid]
     if not cands:
         return None
     cands.sort()

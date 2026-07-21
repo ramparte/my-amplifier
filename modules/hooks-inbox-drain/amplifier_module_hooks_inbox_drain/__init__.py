@@ -23,6 +23,8 @@ from amplifier_core import HookResult, ModuleCoordinator
 logger = logging.getLogger(__name__)
 
 DEFAULT_INBOX_DIR = "~/.amplifier/inbox"
+DEFAULT_BEACON_DIR = "~/.amplifier/session-beacons"
+_BEACON_INTERVAL_S = 30.0  # refresh at most this often (cheap, but no need per-call)
 _PRIORITY_RANK = {"info": 0, "low": 1, "med": 2, "high": 3, "critical": 4}
 
 
@@ -71,6 +73,10 @@ class InboxDrainHook:
         self.inbox_dir = Path(config.get("inbox_dir", DEFAULT_INBOX_DIR)).expanduser()
         self.forced_window = config.get("window_name")  # testing / non-tmux override
         self.role = config.get("role", "user")
+        self.beacon_dir = Path(
+            config.get("beacon_dir", DEFAULT_BEACON_DIR)
+        ).expanduser()
+        self._last_beacon = 0.0
 
     def _is_sub_session(self) -> bool:
         """True when this session is a forked sub-session (subagent).
@@ -117,6 +123,38 @@ class InboxDrainHook:
         if target is None or own_id is None:
             return True
         return str(target) == own_id
+
+    def _beacon(self, own_id: str | None) -> None:
+        """Self-report identity: session_id -> {pid, window, cwd} (throttled).
+
+        The recorder (`record-amplifier-sessions.sh`) matches a pane's amplifier
+        pid against these beacons to map window -> session_uuid EXACTLY, instead
+        of guessing by freshest-mtime session in the cwd's project dir (which
+        collapses every same-cwd pane to one uuid -- the misrouting Sam hit).
+        All values are strings so stdlib-free shell parsing stays trivial.
+        """
+        if not own_id:
+            return
+        import time as _time
+
+        now = _time.monotonic()
+        if now - self._last_beacon < _BEACON_INTERVAL_S:
+            return
+        self._last_beacon = now
+        try:
+            self.beacon_dir.mkdir(parents=True, exist_ok=True)
+            payload = {
+                "session_id": own_id,
+                "pid": str(os.getpid()),
+                "window": _resolve_window_name(self.forced_window) or "",
+                "cwd": os.getcwd(),
+                "ts": _time.strftime("%Y-%m-%dT%H:%M:%SZ", _time.gmtime()),
+            }
+            tmp = self.beacon_dir / f".{_safe_filename(own_id)}.tmp"
+            tmp.write_text(json.dumps(payload, separators=(",", ":")) + "\n")
+            os.replace(tmp, self.beacon_dir / f"{_safe_filename(own_id)}.json")
+        except OSError:
+            logger.debug("hooks-inbox-drain: beacon write failed", exc_info=True)
 
     def _requeue(self, inbox: Path, notes: list[dict[str, Any]]) -> None:
         """Append notes not addressed to us back onto the window inbox so the
@@ -201,6 +239,7 @@ class InboxDrainHook:
                 return HookResult(action="continue")
 
             own_id = self._own_session_id()
+            self._beacon(own_id)
             notes: list[dict[str, Any]] = []
 
             # Phase 2: session-id channel -- a file keyed by our own session id.
