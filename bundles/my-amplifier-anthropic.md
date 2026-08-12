@@ -18,6 +18,12 @@ includes:
   # other than this bundles/ folder -- leaving this overlay with no
   # session/tools/hooks/agents and triggering "Configuration must specify
   # session.orchestrator". Absolute file:// is CWD-independent.
+  #
+  # TODO(revert): fixed upstream by microsoft/amplifier-foundation#303. Once that
+  # merges and foundation is updated here, change this back to
+  # `- bundle: ./my-amplifier-base.md` and drop this comment block.
+  # The absolute path is machine-specific and will not resolve on a clone with a
+  # different home directory.
   - bundle: file:///home/ramparte/dev/ANext/my-amplifier/bundles/my-amplifier-base.md
 
 # Bundle-declared routing matrix. Weakest source: anything set in

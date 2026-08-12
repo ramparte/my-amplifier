@@ -20,8 +20,19 @@ includes:
   # with NO session/tools/hooks/agents at all -- `session.orchestrator` is then
   # simply absent, not merely misconfigured, and create_session() raises
   # "Configuration must specify session.orchestrator". Absolute file:// makes
-  # resolution independent of CWD. Upstream bug worth reporting: relative bundle
-  # includes should resolve relative to the including file's own directory.
+  # resolution independent of CWD.
+  #
+  # COST OF THIS WORKAROUND: the absolute path is machine-specific, so a clone of
+  # this repo on another host (spark-2, macstudio, the Windows WSL box where the
+  # home dir is /home/samschillace) will NOT resolve the base.
+  #
+  # TODO(revert): fixed upstream by microsoft/amplifier-foundation#303, which
+  # anchors relative includes to the declaring bundle's base_path. Once that
+  # merges and this machine's foundation is updated, change this line back to:
+  #     - bundle: ./my-amplifier-base.md
+  # and delete this comment block. Verify by running `amplifier bundle show
+  # my-amplifier-oai` from a directory OTHER than bundles/ and confirming it
+  # still reports 13 tools / 15 hooks / 11 agents.
   - bundle: file:///home/ramparte/dev/ANext/my-amplifier/bundles/my-amplifier-base.md
 
 # Bundle-declared routing matrix. The bundle is the WEAKEST source: any matrix
