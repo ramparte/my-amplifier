@@ -120,4 +120,5 @@ agents:
 Shared, provider-neutral base. Anchors' behavioral principles carry the session;
 the file below states working preferences rather than procedures.
 
+@anchors:context/system.md
 @my-amplifier:context/preferences.md

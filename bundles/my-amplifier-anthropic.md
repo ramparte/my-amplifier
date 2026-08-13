@@ -71,8 +71,3 @@ providers:
       # tracks whatever window is actually in effect.
       enable_1m_context: "true"
 ---
-
-# my-amplifier-anthropic
-
-Anthropic overlay on `my-amplifier-base`. See `context/provider-differences.md`
-for the mechanical differences between the two providers.

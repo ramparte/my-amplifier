@@ -79,8 +79,3 @@ providers:
       # Default is "detailed" (_constants.py:22). Valid: auto | concise | detailed.
       reasoning_summary: concise
 ---
-
-# my-amplifier-oai
-
-OpenAI overlay on `my-amplifier-base`. See `context/provider-differences.md` for
-the full OpenAI-vs-Anthropic analysis and the reasoning behind each knob above.
