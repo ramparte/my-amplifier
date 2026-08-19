@@ -1,16 +1,15 @@
 ---
 bundle:
   name: my-amplifier-qwen
-  version: 0.2.1
+  version: 0.3.0
   description: >
     Full-provider overlay. my-amplifier-base plus all personal provider mounts,
     local Qwen via oMLX, and a Qwen-specific prompt layer.
 
 includes:
-  # Relative file includes are currently resolved from the CLI invocation CWD,
-  # not this file's directory. This Mac-specific absolute path keeps the base
-  # resolvable when Amplifier runs from another project directory.
-  - bundle: file:///Users/samschillace/ANext/my-amplifier/bundles/my-amplifier-base.md
+  # Namespace includes resolve through the registered `my-amplifier` source,
+  # keeping the base resolvable from any working directory on either Mac.
+  - bundle: my-amplifier:bundles/my-amplifier-base.md
 
 providers:
   - id: qwen
