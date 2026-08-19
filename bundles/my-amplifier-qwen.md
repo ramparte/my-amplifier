@@ -1,7 +1,7 @@
 ---
 bundle:
   name: my-amplifier-qwen
-  version: 0.2.0
+  version: 0.2.1
   description: >
     Full-provider overlay. my-amplifier-base plus all personal provider mounts,
     local Qwen via oMLX, and a Qwen-specific prompt layer.
@@ -17,12 +17,10 @@ providers:
     module: provider-chat-completions
     source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
     config:
-      # provider-chat-completions uses config.name, not instance_id, as its
-      # mounted provider identity. Keep it aligned with id for routing.
-      name: qwen
       base_url: http://127.0.0.1:8000/v1
       api_key: not-needed
       default_model: Qwen3.8-27B-4bit
+      priority: 0
       use_streaming: true
       timeout: 600
   - module: provider-openai
