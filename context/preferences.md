@@ -36,15 +36,25 @@ the first and raise the second separately rather than folding it in.
 
 ## Environment
 
-- **SSH convention:** log in as `ramparte@<host>` for the tailscale fleet
-  (spark-1, spark-2, and the other `ramparte` tailscale nodes) — don't guess
-  the local username. **Exception: `macstudio`** has no `ramparte` local
-  account; tailscale there rejects the user at login
-  (`failed to look up local user "ramparte"`), so use `samschillace@macstudio`.
-  The fleet's real key lives on the WSL2 box
-  (`samschillace@100.92.254.41:~/dev/ANext`); a freshly provisioned machine
-  (this Mac) may not yet be authorized on the fleet — verify with a
-  BatchMode probe before assuming login works.
+- **SSH user convention (tailscale fleet):** use `ramparte@<host>` for
+  spark-1, spark-2, and the other `ramparte@` nodes in `tailscale status`
+  (`lazarus`, `traveler-pc`, `sodahouse-computer*`) — never guess the local
+  username.
+  - **`macstudio` exception (broken as of 2026-08-19):** tailscale on
+    `macstudio` fails user lookup for *both* `ramparte` and `samschillace`
+    (`failed to look up local user ...`). No account is reachable — ask the
+    user which account to use; do not guess.
+  - **Key map (2026-08-19):** the working fleet key lives on the laptop
+    (`WILaptopRebuild`, 100.74.32.82). The M5 (`sams-m5`, 100.101.114.84)
+    holds its own key (`~/.ssh/id_ed25519`,
+    SHA256:XZh2nWGiPLZ6iB0620kOFAj6uMvZiafxxe9+faZDzNk) which is NOT yet on
+    the fleet — from the M5, fleet ssh returns `Permission denied
+    (publickey,password)`. If a session on the M5 needs fleet access, have the
+    user append the M5's `~/.ssh/id_ed25519.pub` to the target's
+    `~/.ssh/authorized_keys` from wherever their ramparte login works.
+    The WSL2 box `100.92.254.41` (Windows fallback in `fleet-awareness.md`)
+    is no longer in the tailnet — unreachable until it rejoins.
+  - Always probe with `ssh -o BatchMode=yes ...` before assuming login works.
 - **DGX Spark hosts (spark-1, spark-2):** a Windows box is reachable at
   `samschillace@100.92.254.41` (WSL2, same ANext tree at `~/dev/ANext`) for Edge or
   Office debugging. Linux Chromium and LibreOffice cover nearly everything; use
