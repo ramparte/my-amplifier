@@ -36,6 +36,15 @@ the first and raise the second separately rather than folding it in.
 
 ## Environment
 
+- **SSH convention:** log in as `ramparte@<host>` for the tailscale fleet
+  (spark-1, spark-2, and the other `ramparte` tailscale nodes) — don't guess
+  the local username. **Exception: `macstudio`** has no `ramparte` local
+  account; tailscale there rejects the user at login
+  (`failed to look up local user "ramparte"`), so use `samschillace@macstudio`.
+  The fleet's real key lives on the WSL2 box
+  (`samschillace@100.92.254.41:~/dev/ANext`); a freshly provisioned machine
+  (this Mac) may not yet be authorized on the fleet — verify with a
+  BatchMode probe before assuming login works.
 - **DGX Spark hosts (spark-1, spark-2):** a Windows box is reachable at
   `samschillace@100.92.254.41` (WSL2, same ANext tree at `~/dev/ANext`) for Edge or
   Office debugging. Linux Chromium and LibreOffice cover nearly everything; use
