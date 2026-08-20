@@ -9,7 +9,7 @@ Do NOT use Windows proactively. Linux Chromium and LibreOffice handle 95% of cas
 
 **SSH:** `samschillace@100.92.254.41` (WSL2 on Windows, same ANext at ~/dev/ANext)
 
-**Status (2026-08-19):** `100.92.254.41` no longer appears in `tailscale status` —
+**Status (2026-08-20, re-verified):** `100.92.254.41` no longer appears in `tailscale status` —
 verify the box has rejoined the tailnet before relying on this fallback.
 
 **Fleet management scripts:** `~/dev/ANext/dgx-spark-setup/` -- see AGENTS.md there.

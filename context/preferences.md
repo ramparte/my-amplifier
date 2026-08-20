@@ -40,26 +40,27 @@ the first and raise the second separately rather than folding it in.
   spark-1, spark-2, and the other `ramparte@` nodes in `tailscale status`
   (`lazarus`, `traveler-pc`, `sodahouse-computer*`) — never guess the local
   username.
-  - **`macstudio` exception (broken as of 2026-08-19):** tailscale on
-    `macstudio` fails user lookup for *both* `ramparte` and `samschillace`
-    (`failed to look up local user ...`). No account is reachable — ask the
-    user which account to use; do not guess.
-  - **Key map (2026-08-19):** the working fleet key lives on the laptop
-    (`WILaptopRebuild`, 100.74.32.82). The M5 (`sams-m5`, 100.101.114.84)
-    holds its own key (`~/.ssh/id_ed25519`,
-    SHA256:XZh2nWGiPLZ6iB0620kOFAj6uMvZiafxxe9+faZDzNk) which is NOT yet on
-    the fleet — from the M5, fleet ssh returns `Permission denied
-    (publickey,password)`. If a session on the M5 needs fleet access, have the
-    user append the M5's `~/.ssh/id_ed25519.pub` to the target's
-    `~/.ssh/authorized_keys` from wherever their ramparte login works.
-    The WSL2 box `100.92.254.41` (Windows fallback in `fleet-awareness.md`)
-    is no longer in the tailnet — unreachable until it rejoins.
-  - Always probe with `ssh -o BatchMode=yes ...` before assuming login works.
-- **DGX Spark hosts (spark-1, spark-2):** a Windows box is reachable at
-  `samschillace@100.92.254.41` (WSL2, same ANext tree at `~/dev/ANext`) for Edge or
-  Office debugging. Linux Chromium and LibreOffice cover nearly everything; use
-  Windows only for a genuine platform-specific issue. Fleet scripts live in
-  `~/dev/ANext/dgx-spark-setup/`.
+  - **`macstudio` exception:** use `sam@macstudio`. Tailscale on the Mac
+    Studio fails user lookup for the other local accounts (`failed to look
+    up local user ...`); `sam` is the working account.
+  - **Fleet key:** the laptop (`sams-m5` / `Sams-M5.local` — "the M5
+    laptop") holds the authorized fleet key `~/.ssh/id_ed25519`
+    (SHA256:XZh2nWGiPLZ6iB0620kOFAj6uMvZiafxxe9+faZDzNk). Plain key login
+    works from there to `ramparte@spark-1` and `ramparte@spark-2`
+    (verified 2026-08-20). `sam@macstudio` needs no key at all — its
+    tailscale authenticates with `none`. If the sparks start returning
+    `Permission denied (publickey,password)`, their
+    `~/.ssh/authorized_keys` was likely rotated — re-publish the key.
+  - **Naming:** "M5" is ambiguous — the Mac Studio (`macstudio`) and the
+    laptop (`sams-m5`) are both M5 machines. Always disambiguate by
+    hostname or tailscale name.
+  - Probe with `ssh -o BatchMode=yes ...` before assuming login works.
+- **DGX Spark hosts (spark-1, spark-2):** fleet management scripts live in
+  `~/dev/ANext/dgx-spark-setup/` on the sparks (not in the laptop's
+  `~/ANext` tree). Linux Chromium and LibreOffice cover nearly everything;
+  the Windows WSL2 box (`samschillace@100.92.254.41`, see
+  `fleet-awareness.md`) is the fallback for Edge/Office debugging — but it
+  left the tailnet (as of 2026-08-20), so verify it before relying on it.
 - **Mac Studio (`macstudio`):** oMLX serves a fast local model on port 8000
   alongside Ollama on 11434. The `fast-local` agent is already wired to it — delegate
   there when asked for fast local inference or when SSD-backed KV caching across a
