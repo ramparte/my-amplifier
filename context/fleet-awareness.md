@@ -7,9 +7,19 @@ available via Tailscale for Edge/Office debugging.
 real Office COM automation, or the user explicitly asks for Windows-side testing.
 Do NOT use Windows proactively. Linux Chromium and LibreOffice handle 95% of cases.
 
-**SSH:** `samschillace@100.92.254.41` (WSL2 on Windows, same ANext at ~/dev/ANext)
+**Windows/WSL client:** friendly name `wilaptop-rebuild`; Windows/WSL hostname
+`WILaptopRebuild`; Tailscale node `wilaptoprebuild` (`100.74.32.82`); WSL user
+`samschillace`; same ANext tree at `~/dev/ANext`.
 
-**Status (2026-08-20, re-verified):** `100.92.254.41` no longer appears in `tailscale status` —
-verify the box has rejoined the tailnet before relying on this fallback.
+**Spark endpoint:** friendly name `spark-1`; OS hostname `spark-832a`; Tailscale
+IP `100.123.54.55`; SSH user `ramparte`.
 
-**Fleet management scripts:** `~/dev/ANext/dgx-spark-setup/` -- see AGENTS.md there.
+**Windows-facing Spark services:** the laptop initiates a persistent SSH tunnel
+that identity-forwards localhost ports **8400-8500 inclusive** to Spark. The
+canonical topology, operating procedure, and allocation ledger is
+`/home/ramparte/dev/ANext/dgx-spark-setup/TUNNEL-ARCHITECTURE.md`.
+Do not infer availability from WSL's SSH listeners; check live Spark listeners
+and the ledger.
+
+**Fleet management scripts:** `~/dev/ANext/dgx-spark-setup/` -- see `AGENTS.md`
+there.

@@ -56,11 +56,20 @@ the first and raise the second separately rather than folding it in.
     hostname or tailscale name.
   - Probe with `ssh -o BatchMode=yes ...` before assuming login works.
 - **DGX Spark hosts (spark-1, spark-2):** fleet management scripts live in
-  `~/dev/ANext/dgx-spark-setup/` on the sparks (not in the laptop's
-  `~/ANext` tree). Linux Chromium and LibreOffice cover nearly everything;
-  the Windows WSL2 box (`samschillace@100.92.254.41`, see
-  `fleet-awareness.md`) is the fallback for Edge/Office debugging — but it
-  left the tailnet (as of 2026-08-20), so verify it before relying on it.
+  `~/dev/ANext/dgx-spark-setup/` on the sparks. Linux Chromium and LibreOffice
+  cover nearly everything; use `wilaptop-rebuild` (`WILaptopRebuild`; Tailscale
+  node `wilaptoprebuild` at `100.74.32.82`; WSL user `samschillace`) only for a
+  genuine Windows-specific Edge or Office issue.
+- **Spark-to-Windows service URLs:** a persistent WSL-initiated SSH tunnel
+  identity-forwards localhost ports **8400-8500 inclusive** from
+  `wilaptop-rebuild` to `spark-1` (`100.123.54.55`; SSH user `ramparte`). Choose
+  an unclaimed port only after checking live Spark listeners, bind the Spark
+  service to `127.0.0.1:<port>`, and give the user
+  `http://localhost:<port>/...` for Windows. The canonical contract and
+  allocation ledger is
+  `/home/ramparte/dev/ANext/dgx-spark-setup/TUNNEL-ARCHITECTURE.md`. Every
+  allocation, release, range/destination/launcher change must update that ledger
+  and the deployment source, then be verified Spark -> WSL -> Windows end to end.
 - **Mac Studio (`macstudio`):** oMLX serves a fast local model on port 8000
   alongside Ollama on 11434. The `fast-local` agent is already wired to it — delegate
   there when asked for fast local inference or when SSD-backed KV caching across a
