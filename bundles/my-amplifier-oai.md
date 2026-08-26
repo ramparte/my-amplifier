@@ -49,16 +49,15 @@ routing:
   matrix: openai
 
 # =====================================================================
-# THE ONLY THING THAT MAKES THIS THE "OpenAI" BUNDLE
+# PROVIDER MOUNTS AND OPENAI-SCOPED KNOBS
 # ---------------------------------------------------------------------
-# Merged by module id, so this extends rather than replaces whatever
-# ~/.amplifier/settings.yaml already sets for provider-openai (api_key,
-# default_model, priority). Settings win on conflict; none of the keys below
-# are set there. provider-anthropic is untouched.
+# This block declares every provider mount. The OpenAI instances share scoped
+# safety knobs; settings fill credentials, models, endpoints, and other
+# provider-specific configuration by exact id/module identity.
 # =====================================================================
 providers:
   - module: provider-openai
-    config:
+    config: &openai_safety
       # Default is "auto" -> ON for every reasoning model (__init__.py:746-751).
       # Chaining sets store=true and passes previous_response_id, so the SERVER
       # holds a growing context that local compaction cannot see and therefore
@@ -78,4 +77,24 @@ providers:
 
       # Default is "detailed" (_constants.py:22). Valid: auto | concise | detailed.
       reasoning_summary: concise
+  - module: provider-anthropic
+  - module: provider-github-copilot
+  - id: runpod
+    module: provider-vllm
+  - id: runpod-qwen
+    module: provider-vllm
+  - id: fable
+    module: provider-anthropic
+  - id: opus
+    module: provider-anthropic
+  - id: sonnet
+    module: provider-anthropic
+  - id: "5.5"
+    module: provider-openai
+    config:
+      <<: *openai_safety
+  - id: "5.6"
+    module: provider-openai
+    config:
+      <<: *openai_safety
 ---
