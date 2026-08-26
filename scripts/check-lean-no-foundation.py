@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Lint: fail if a "lean" bundle transitively composes the FULL amplifier-foundation.
 
 Background

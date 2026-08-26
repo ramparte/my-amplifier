@@ -18,7 +18,7 @@ sys.path.insert(
     ),
 )
 
-from _logic import (  # noqa: E402  # pyright: ignore[reportMissingImports]
+from _logic import (  # pyright: ignore[reportMissingImports]
     band_for,
     effective_input_tokens,
     format_warning,
