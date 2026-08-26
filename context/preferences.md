@@ -31,8 +31,12 @@ screenfuls, narrow it or delegate it.
 
 ## Scope
 
-Answer the question that was asked. If a second problem surfaces mid-task, finish
-the first and raise the second separately rather than folding it in.
+Treat a request as authorization to deliver its stated outcomes, not to improve
+adjacent systems or absorb newly found defects; report those separately. For
+setup, configuration plus one relevant smoke test is sufficient; a failure is
+a blocker, not permission to repair the platform. Do not turn reviews or
+retries into loops. If part of a request is blocked, say so and continue
+independent requested work.
 
 ## Environment
 
