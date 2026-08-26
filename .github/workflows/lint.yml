@@ -32,3 +32,6 @@ jobs:
           pip install ruff
           ruff format --check scripts modules/hooks-token-warning
           ruff check scripts modules/hooks-token-warning
+
+      - name: provider overlays inherit shared system instructions
+        run: python3 scripts/check-provider-overlay-instructions.py

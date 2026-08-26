@@ -38,3 +38,10 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: provider-overlay-instructions
+        name: provider overlays inherit shared system instructions
+        entry: python3 scripts/check-provider-overlay-instructions.py
+        language: system
+        pass_filenames: false
+        always_run: true
