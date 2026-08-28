@@ -76,3 +76,4 @@ only added always-on guidance.
 
 @anchors:context/system.md
 @my-amplifier-anchors:context/preferences.md
+@user:AGENTS.md

@@ -122,3 +122,4 @@ the file below states working preferences rather than procedures.
 
 @anchors:context/system.md
 @my-amplifier:context/preferences.md
+@user:AGENTS.md
