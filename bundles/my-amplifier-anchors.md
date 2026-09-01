@@ -74,6 +74,20 @@ agents:
 Anchors supplies the operating principles. Concise working preferences are the
 only added always-on guidance.
 
+## Mandatory Spark-to-Windows invariant
+
+Direct Windows-to-Spark access never works, including through Tailscale. For
+every Windows-facing Spark service: **allocate** an unclaimed identity-mapped
+port in `8400-8500` after checking the canonical ledger and live listeners;
+**publish** the service or loopback proxy on that same Spark port; proactively
+**repair** or install and maintain the persistent WSL tunnel with the versioned
+Concern OS installer and the machine's required profile; **record** the
+allocation; and **verify** the exact URL from Spark, WSL, and Windows. Report
+only `http://localhost:<port>/...`, and never silently change an assigned port.
+
 @anchors:context/system.md
 @my-amplifier-anchors:context/preferences.md
+@my-amplifier-anchors:context/spark-windows-tunnels.md
+
+# Local machine supplement
 @user:AGENTS.md

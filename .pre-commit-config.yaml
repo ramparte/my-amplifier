@@ -45,3 +45,10 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: tunnel-policy-bundles
+        name: versioned Spark-to-Windows tunnel policy bundle contract
+        entry: python3 scripts/check-tunnel-policy-bundles.py
+        language: system
+        pass_filenames: false
+        always_run: true
