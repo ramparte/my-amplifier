@@ -34,4 +34,10 @@ jobs:
           ruff check scripts modules/hooks-token-warning
 
       - name: provider overlays inherit shared system instructions
-        run: python3 scripts/check-provider-overlay-instructions.py
+        run: |
+          python3 -m pip install \
+            "amplifier-foundation @ git+https://github.com/microsoft/amplifier-foundation@main"
+          python3 scripts/check-provider-overlay-instructions.py
+
+      - name: versioned Spark-to-Windows tunnel policy contract
+        run: python3 scripts/check-tunnel-policy-bundles.py

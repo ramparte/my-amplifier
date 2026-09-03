@@ -13,56 +13,29 @@ modules as of 2026-08.
 ## TL;DR
 
 Your prompts are probably fine on Claude and too heavy for gpt-5.x. But instruction
-density is a **multiplier**, not the root cause. Four independent things compound:
+density is a **multiplier**, not the root cause. Three independent things compound:
 
 | # | Difference | Effect on OpenAI | Anthropic equivalent |
 |---|---|---|---|
-| 1 | Server-side response chaining is ON by default | Context grows where local compaction can't see it | None — stateless, immune |
-| 2 | Instructions are one flat string, no cache breakpoints | Whole preamble re-sent every call | 3 explicit `cache_control` breakpoints |
-| 3 | High reasoning effort × dense instructions | Model executes your bundle instead of your task | Claude soft-weights standing orders |
-| 4 | Orchestrator iteration limit defaults to unlimited | Nothing stops a spin | Same default — but #1 makes it bite harder |
+| 1 | Instructions are one flat string, no cache breakpoints | Whole preamble re-sent every call | 3 explicit `cache_control` breakpoints |
+| 2 | High reasoning effort × dense instructions | Model executes your bundle instead of your task | Claude soft-weights standing orders |
+| 3 | Orchestrator iteration limit defaults to unlimited | Nothing stops a spin | Same default |
 
 ---
 
-## 1. Response chaining — the big one
+## 1. Conversation state — historical
 
-`provider-openai` is **stateful by default**. `provider-anthropic` is not.
+The runaway described here occurred with an earlier OpenAI provider implementation
+that allowed server-side response chaining. The current `provider-openai` is always
+stateless, so the local context manager sees the complete conversation it must
+compact.
 
-`enable_response_chaining` defaults to `"auto"`, which resolves to **ON for every
-reasoning model** (`__init__.py:746-751`). When on, the provider sets `store=true`
-and passes `previous_response_id`, sending only a 1–5 item delta per call. The
-server holds the rest.
+The historical run grew from 31,380 to 190,354 input tokens across 30 calls while
+local compaction did not fire. That observation remains useful when interpreting
+older session logs, but it does not describe the installed provider behavior.
 
-**Why that hurts:** your local context manager measures the local transcript, which
-is now tiny. It never crosses `compact_threshold`, so compaction never fires, while
-the server-side context grows without limit. In the session I analyzed, input tokens
-went 31,380 → 190,354 across 30 calls with `compact_threshold` nominally set to
-fire at 140K. Nothing fired. Nothing errored. It just would not stop.
-
-The provider's own comments say so (`__init__.py:142-155`, `605-613`): chaining
-"drives unbounded input-token growth → context_length_exceeded." Its only guards are
-a one-shot chain reset on a compaction event, and a reactive retry *after* a 400 has
-already been returned. Both are cleanup, not prevention.
-
-Anthropic has no comparable mechanism. It resends the full message array every call
-with explicit cache breakpoints, so what compaction measures is what the model sees.
-
-**Mitigation** — in your bundle's `providers:` block, or the provider config in
-`~/.amplifier/settings.yaml`:
-
-```yaml
-providers:
-  - module: provider-openai
-    config:
-      enable_response_chaining: false
-```
-
-This makes OpenAI stateless per call, exactly like Anthropic, so your
-`compact_threshold` becomes meaningful again. Prefix caching still works — that runs
-off `prompt_cache_key` / `prompt_cache_retention`, which are separate knobs.
-
-**Verify it took:** find `llm:request` in your session's `events.jsonl` and confirm
-`data.raw.store == false` and no `previous_response_id`.
+**Verify current behavior:** find `llm:request` in a session's `events.jsonl` and
+confirm `data.raw.store == false` and no `previous_response_id`.
 
 ---
 
@@ -168,17 +141,16 @@ providers:
       reasoning_summary: concise
 ```
 
-**Known gap:** gpt-5.x's `text.verbosity` parameter is **not implemented** in
-`provider-openai` — zero occurrences in the source. The primary output-length control
-is unwired. Worth an upstream issue.
+`text_verbosity` is supported by the installed provider. Use it when output length,
+rather than reasoning effort or summary detail, is the behavior to control.
 
 ---
 
 ## 5. No iteration ceiling
 
 The shared orchestrator's `max_iterations` defaults to `-1` = unlimited
-(`loop-streaming/__init__.py:581-582`, `2346`). This is provider-agnostic, but chaining
-means an OpenAI spin has no natural termination.
+(`loop-streaming/__init__.py:581-582`, `2346`). This is provider-agnostic, so a finite
+ceiling remains the backstop for any session that would otherwise keep iterating.
 
 In the analyzed session, a single user prompt drove **10 internal orchestrator turns**.
 
@@ -246,16 +218,15 @@ duplicated boilerplate was **89.6% of an 11 MB file**; actual conversation conte
 
 For any bundle you intend to run against OpenAI:
 
-1. `enable_response_chaining: false` on `provider-openai`.
-2. `max_tokens` / `compact_threshold` matched to the OpenAI model, with the compaction
+1. `max_tokens` / `compact_threshold` matched to the OpenAI model, with the compaction
    notice enabled.
-3. `max_iterations` set to something finite.
-4. `reasoning_effort: medium` for the main loop; `reasoning_summary: concise`.
-5. System prompt under ~20 KB. Audit for "check before every response" mandates,
+2. `max_iterations` set to something finite.
+3. `reasoning_effort: medium` for the main loop; `reasoning_summary: concise`.
+4. System prompt under ~20 KB. Audit for "check before every response" mandates,
    trigger phrases on common English, and unused agents inflating the `delegate` schema.
 
-Items 1 and 4 are provider-scoped and cannot affect Anthropic sessions. Items 2, 3 and
-5 are shared, and improve both.
+Item 3 is provider-scoped and cannot affect Anthropic sessions. Items 1, 2, and 4 are
+shared, and improve both.
 
 ---
 

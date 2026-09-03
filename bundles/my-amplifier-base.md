@@ -1,11 +1,11 @@
 ---
 bundle:
   name: my-amplifier-base
-  version: 0.1.0
+  version: 0.2.0
   description: >
     Shared base for the provider-specific personal bundles. Everything that is
     NOT provider-specific lives here: the Anchors foundation, python tooling,
-    local hooks, the fast-local agent, and one declarative preferences file.
+    local hooks, and one declarative preferences file.
     Not meant to be activated directly -- use my-amplifier-oai or
     my-amplifier-anthropic, which include this and add only their provider block.
 
@@ -19,9 +19,10 @@ bundle:
 # density is better for Claude too; there is no reason to maintain two copies of
 # prose that would immediately drift.
 #
-# The overlays contain ONLY what genuinely differs at the wire level: the
-# `providers:` block and the `routing:` matrix. If an overlay ever grows past
-# ~30 lines, something has leaked out of this file and should be pushed back in.
+# The overlays contain ONLY what genuinely differs at the wire level: their
+# `providers:` block. Routing is configured independently of bundle selection.
+# If an overlay ever grows past ~30 lines, something has leaked out of this file
+# and should be pushed back in.
 #
 # Composition mechanics that make this work (amplifier_foundation Bundle.compose):
 #   - `session` / `spawn` are dicts -> deep_merge, LATER (overlay) wins per key
@@ -109,10 +110,6 @@ hooks:
       fail_on_broken: false
       priority: 10
 
-agents:
-  include:
-    # Fast local inference via oMLX on the Mac Studio.
-    - my-amplifier:agents/fast-local
 ---
 
 # my-amplifier-base

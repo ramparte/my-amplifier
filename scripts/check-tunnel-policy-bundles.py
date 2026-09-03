@@ -15,7 +15,7 @@ def split_bundle(path: Path) -> tuple[str, str]:
 
 
 def main() -> int:
-    """Validate the policy, system invariant, and context-only app bundle."""
+    """Validate the policy source and context-only app bundle."""
     repo = Path(__file__).resolve().parent.parent
     policy = (repo / "context" / "spark-windows-tunnels.md").read_text(encoding="utf-8")
     required_policy_markers = (
@@ -31,16 +31,6 @@ def main() -> int:
     )
     for marker in required_policy_markers:
         assert marker in policy, f"tunnel policy is missing {marker!r}"
-
-    anchors_frontmatter, anchors_body = split_bundle(
-        repo / "bundles" / "my-amplifier-anchors.md"
-    )
-    assert "bundles/anchors/bundle.md" in anchors_frontmatter
-    for action in ("**allocate**", "**publish**", "**repair**", "**verify**"):
-        assert action in anchors_body, f"system invariant is missing {action}"
-    mention = "@my-amplifier-anchors:context/spark-windows-tunnels.md"
-    assert anchors_body.count(mention) == 1
-    assert anchors_body.count("@user:AGENTS.md") == 1
 
     app_frontmatter, app_body = split_bundle(
         repo / "bundles" / "my-amplifier-tunnel-policy.md"

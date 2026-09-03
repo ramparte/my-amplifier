@@ -74,7 +74,3 @@ independent requested work.
   `/home/ramparte/dev/ANext/dgx-spark-setup/TUNNEL-ARCHITECTURE.md`. Every
   allocation, release, range/destination/launcher change must update that ledger
   and the deployment source, then be verified Spark -> WSL -> Windows end to end.
-- **Mac Studio (`macstudio`):** oMLX serves a fast local model on port 8000
-  alongside Ollama on 11434. The `fast-local` agent is already wired to it — delegate
-  there when asked for fast local inference or when SSD-backed KV caching across a
-  long analysis would help.
