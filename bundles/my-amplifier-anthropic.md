@@ -1,11 +1,11 @@
 ---
 bundle:
   name: my-amplifier-anthropic
-  version: 0.2.0
+  version: 0.2.1
   description: >
-    Anthropic overlay on my-amplifier-base. Saved settings provide credentials,
-    endpoints, models, priorities, and identity-specific values; they override
-    these portable cache and context defaults by exact identity.
+    Anthropic overlay on my-amplifier-base. The generic provider defaults to
+    Opus for portable roots; saved settings with the same exact identity
+    override that default and all other portable provider settings.
 
 includes:
   # ABSOLUTE path, not relative -- see my-amplifier-oai.md for the full
@@ -28,6 +28,7 @@ includes:
 providers:
   - module: provider-anthropic
     config:
+      default_model: claude-opus-4-8
       enable_prompt_caching: true
       cache_stable_region_ttl_1h: true
       enable_1m_context: true

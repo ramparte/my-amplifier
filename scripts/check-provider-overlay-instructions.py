@@ -306,6 +306,20 @@ def check_static(repo: Path) -> None:
             "provider-vllm",
         ),
     )
+    anthropic_configs = {
+        entry.identity: dict(entry.config)
+        for entry in parse_provider_entries(
+            anthropic.frontmatter, repo / "bundles" / "my-amplifier-anthropic.md"
+        )
+    }
+    assert anthropic_configs[None].get("default_model") == "claude-opus-4-8", (
+        "my-amplifier-anthropic: generic provider must default to claude-opus-4-8"
+    )
+    for identity in ("fable", "opus", "sonnet"):
+        assert "default_model" not in anthropic_configs[identity], (
+            "my-amplifier-anthropic: named provider "
+            f"{identity!r} must not set a bundle-local default_model"
+        )
 
     anchors = sources["my-amplifier-anchors"]
     assert not anchors.body.strip(), (
