@@ -26,6 +26,12 @@ jobs:
         run: |
           python3 scripts/check-lean-no-foundation.py --static bundle.md bundles/*.md
 
+      - name: provider-profile launcher tests
+        run: |
+          bash -n configs/amplifier-oai.sh \
+            configs/amplifier-anthropic.sh
+          python3 scripts/test-amplifier-provider-wrappers.py
+
       # 3. Lightweight code-quality gate on the new code.
       - name: ruff (format + lint)
         run: |
