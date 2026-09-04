@@ -1,29 +1,20 @@
 ---
 bundle:
   name: my-amplifier-anthropic
-  version: 0.2.1
+  version: 0.2.2
   description: >
     Anthropic overlay on my-amplifier-base. The generic provider defaults to
     Opus for portable roots; saved settings with the same exact identity
     override that default and all other portable provider settings.
 
 includes:
-  # ABSOLUTE path, not relative -- see my-amplifier-oai.md for the full
-  # explanation. `amplifier_foundation.registry.BundleRegistry` resolves
-  # `./relative.md` includes against `Path.cwd()` at registry-construction
-  # time (the CLI invocation directory), not the including file's own
-  # directory, so a relative include here silently drops (warning-only,
-  # not raised) whenever `amplifier run` is invoked from any directory
-  # other than this bundles/ folder -- leaving this overlay with no
-  # session/tools/hooks/agents and triggering "Configuration must specify
-  # session.orchestrator". Absolute file:// is CWD-independent.
-  #
-  # TODO(revert): fixed upstream by microsoft/amplifier-foundation#303. Once that
-  # merges and foundation is updated here, change this back to
-  # `- bundle: ./my-amplifier-base.md` and drop this comment block.
-  # The absolute path is machine-specific and will not resolve on a clone with a
-  # different home directory.
-  - bundle: file:///home/ramparte/dev/ANext/my-amplifier/bundles/my-amplifier-base.md
+  # Base included FROM GIT (same repo @main) -- see my-amplifier-oai.md for the
+  # full rationale. git+ is CWD-independent and machine-independent, so this
+  # overlay resolves identically across the fleet and never reaches into a local
+  # worktree. A `./relative.md` include is NOT safe: amplifier_foundation
+  # resolves it against Path.cwd(), not this file's dir (foundation #303, still
+  # unmerged). COST: base edits take effect only after `git push` to @main.
+  - bundle: git+https://github.com/ramparte/my-amplifier@main#subdirectory=bundles/my-amplifier-base.md
 
 providers:
   - module: provider-anthropic

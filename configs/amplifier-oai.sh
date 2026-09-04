@@ -4,6 +4,10 @@ set -euo pipefail
 
 readonly BUNDLE="my-amplifier-oai"
 readonly PROVIDER="openai"
+# Flagship tier. The runaway was caused by EFFORT, not tier: gpt-5.6-sol @ xhigh
+# could not complete a run inside a 30-min cap at 3-7x cost, but sol @ high is
+# the highest-quality option and the S4 deep-diagnosis evidence favors it over
+# sol @ medium. Effort is pinned to `high` in the provider settings, never xhigh.
 readonly MODEL="gpt-5.6-sol"
 readonly MATRIX="openai"
 

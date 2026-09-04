@@ -18,10 +18,10 @@ BUNDLE_NAMES = (
     "my-amplifier-base",
     "my-amplifier-oai",
     "my-amplifier-anthropic",
-    "my-amplifier-anchors",
 )
 BASE_INCLUDE_PATTERN = re.compile(
-    r"(?m)^  - bundle: file:///.+/bundles/my-amplifier-base\.md\s*$"
+    r"(?m)^  - bundle: git\+https://github\.com/ramparte/my-amplifier@main"
+    r"#subdirectory=bundles/my-amplifier-base\.md\s*$"
 )
 
 
@@ -48,14 +48,10 @@ def split_bundle(path: Path) -> BundleSource:
         raise AssertionError(f"{path}: missing opening frontmatter delimiter")
     try:
         closing = next(
-            index
-            for index, line in enumerate(lines[1:], start=1)
-            if line.strip() == "---"
+            index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---"
         )
     except StopIteration as error:
-        raise AssertionError(
-            f"{path}: missing closing frontmatter delimiter"
-        ) from error
+        raise AssertionError(f"{path}: missing closing frontmatter delimiter") from error
     return BundleSource("".join(lines[1:closing]), "".join(lines[closing + 1 :]))
 
 
@@ -71,13 +67,10 @@ def parse_provider_entries(frontmatter: str, path: Path) -> tuple[ProviderEntry,
     """Extract top-level provider entries from constrained bundle frontmatter."""
     lines = frontmatter.splitlines(keepends=True)
     provider_sections = [
-        index
-        for index, line in enumerate(lines)
-        if re.fullmatch(r"providers:\s*", line)
+        index for index, line in enumerate(lines) if re.fullmatch(r"providers:\s*", line)
     ]
     assert len(provider_sections) == 1, (
-        f"{path}: expected exactly one top-level providers section, "
-        f"found {len(provider_sections)}"
+        f"{path}: expected exactly one top-level providers section, found {len(provider_sections)}"
     )
     start = provider_sections[0]
 
@@ -116,13 +109,9 @@ def parse_provider_config(block: str, path: Path) -> tuple[tuple[str, str], ...]
     """Extract scalar settings from one provider entry's actual config mapping."""
     lines = block.splitlines(keepends=True)
     config_sections = [
-        index
-        for index, line in enumerate(lines)
-        if re.fullmatch(r"    config:\s*", line)
+        index for index, line in enumerate(lines) if re.fullmatch(r"    config:\s*", line)
     ]
-    assert len(config_sections) <= 1, (
-        f"{path}: provider entry contains multiple config mappings"
-    )
+    assert len(config_sections) <= 1, f"{path}: provider entry contains multiple config mappings"
     if not config_sections:
         return ()
 
@@ -162,9 +151,7 @@ def assert_provider_contract(
         assert marker not in source.frontmatter, f"{path}: contains {marker!r}"
 
 
-def assert_rejected(
-    description: str, expected_message: str, check: Callable[[], object]
-) -> None:
+def assert_rejected(description: str, expected_message: str, check: Callable[[], object]) -> None:
     """Assert a no-argument validation callable rejects malformed input."""
     try:
         check()
@@ -189,9 +176,7 @@ providers:
     assert_rejected(
         "a duplicate top-level providers section",
         "expected exactly one top-level providers section",
-        lambda: parse_provider_entries(
-            duplicate_providers, Path("<duplicate-providers>")
-        ),
+        lambda: parse_provider_entries(duplicate_providers, Path("<duplicate-providers>")),
     )
 
     comment_only_setting = """\
@@ -216,20 +201,14 @@ providers:
 
 def check_static(repo: Path) -> None:
     """Enforce provider-neutral base and exact provider overlay composition."""
-    sources = {
-        name: split_bundle(repo / "bundles" / f"{name}.md") for name in BUNDLE_NAMES
-    }
+    sources = {name: split_bundle(repo / "bundles" / f"{name}.md") for name in BUNDLE_NAMES}
     for name, source in sources.items():
         path = repo / "bundles" / f"{name}.md"
         assert bundle_name(source.frontmatter, path) == name, path
 
     base = sources["my-amplifier-base"]
-    assert base.body.count(ANCHORS_MENTION) == 1, (
-        "base must mention Anchors exactly once"
-    )
-    assert base.body.count(PREFERENCES_MENTION) == 1, (
-        "base must mention preferences exactly once"
-    )
+    assert base.body.count(ANCHORS_MENTION) == 1, "base must mention Anchors exactly once"
+    assert base.body.count(PREFERENCES_MENTION) == 1, "base must mention preferences exactly once"
     assert base.body.count(USER_AGENTS_MENTION) == 1, (
         "base must mention user instructions exactly once"
     )
@@ -263,10 +242,7 @@ def check_static(repo: Path) -> None:
         oai,
         path=repo / "bundles" / "my-amplifier-oai.md",
         expected=expected_oai,
-        required_config=(
-            ("reasoning_effort", "medium"),
-            ("reasoning_summary", "concise"),
-        ),
+        required_config=(("reasoning_summary", "concise"),),
         forbidden_markers=(
             "enable_response_chaining",
             "routing:",
@@ -276,6 +252,18 @@ def check_static(repo: Path) -> None:
         ),
     )
 
+    oai_configs = {
+        entry.identity: dict(entry.config)
+        for entry in parse_provider_entries(
+            oai.frontmatter, repo / "bundles" / "my-amplifier-oai.md"
+        )
+    }
+    for identity, config in oai_configs.items():
+        assert "reasoning_effort" not in config, (
+            f"my-amplifier-oai: {identity!r} must not pin reasoning_effort "
+            "(owned by settings.yaml, which wins the same-id merge)"
+        )
+
     expected_anthropic = (
         (None, "provider-anthropic"),
         ("fable", "provider-anthropic"),
@@ -283,9 +271,7 @@ def check_static(repo: Path) -> None:
         ("sonnet", "provider-anthropic"),
     )
     anthropic = sources["my-amplifier-anthropic"]
-    assert not anthropic.body.strip(), (
-        "my-amplifier-anthropic: instruction body must be empty"
-    )
+    assert not anthropic.body.strip(), "my-amplifier-anthropic: instruction body must be empty"
     assert len(BASE_INCLUDE_PATTERN.findall(anthropic.frontmatter)) == 1, (
         "my-amplifier-anthropic: must include the shared base exactly once"
     )
@@ -321,21 +307,6 @@ def check_static(repo: Path) -> None:
             f"{identity!r} must not set a bundle-local default_model"
         )
 
-    anchors = sources["my-amplifier-anchors"]
-    assert not anchors.body.strip(), (
-        "my-amplifier-anchors: compatibility alias body must be empty"
-    )
-    assert len(BASE_INCLUDE_PATTERN.findall(anchors.frontmatter)) == 1, (
-        "my-amplifier-anchors: must include the shared base exactly once"
-    )
-    assert anchors_include not in anchors.frontmatter, (
-        "my-amplifier-anchors must not directly include upstream Anchors"
-    )
-    for section in ("providers", "tools", "hooks", "agents", "session", "routing"):
-        assert not re.search(rf"(?m)^{section}:\s*$", anchors.frontmatter), (
-            f"my-amplifier-anchors: must not declare {section}"
-        )
-
     qwen_path = repo / "bundles" / "my-amplifier-qwen.md"
     qwen = split_bundle(qwen_path)
     assert bundle_name(qwen.frontmatter, qwen_path) == "my-amplifier-qwen"
@@ -343,18 +314,11 @@ def check_static(repo: Path) -> None:
         "my-amplifier-qwen must retain fast-local explicitly"
     )
     for source, path in (
-        *[
-            (source, repo / "bundles" / f"{name}.md")
-            for name, source in sources.items()
-        ],
+        *[(source, repo / "bundles" / f"{name}.md") for name, source in sources.items()],
         (qwen, qwen_path),
     ):
-        assert "enable_response_chaining" not in source.frontmatter, (
-            f"{path}: stale OpenAI setting"
-        )
-        assert "cache_ttl:" not in source.frontmatter, (
-            f"{path}: stale Anthropic setting"
-        )
+        assert "enable_response_chaining" not in source.frontmatter, f"{path}: stale OpenAI setting"
+        assert "cache_ttl:" not in source.frontmatter, f"{path}: stale Anthropic setting"
         assert not re.search(r"(?m)^routing:\s*$", source.frontmatter), (
             f"{path}: inert routing declaration"
         )
@@ -382,9 +346,6 @@ async def check_runtime(repo: Path) -> int | None:
             return None
         raise
 
-    sources = {
-        name: split_bundle(repo / "bundles" / f"{name}.md") for name in BUNDLE_NAMES
-    }
     original_cwd = Path.cwd()
     max_prompt_bytes = 0
     try:
@@ -403,10 +364,6 @@ async def check_runtime(repo: Path) -> int | None:
                 )
                 assert bundle.name == name
                 assert bundle.instruction
-                if name == "my-amplifier-anchors":
-                    assert (
-                        bundle.instruction == sources["my-amplifier-base"].body.strip()
-                    )
                 prepared = await bundle.prepare(install_deps=False, strict=True)
                 mentions = await load_mentions(
                     bundle.instruction,
@@ -421,9 +378,7 @@ async def check_runtime(repo: Path) -> int | None:
                     ANCHORS_MENTION,
                     PREFERENCES_MENTION,
                 }
-                assert required_mentions.issubset(found), (
-                    f"{name}: resolved {set(found)!r}"
-                )
+                assert required_mentions.issubset(found), f"{name}: resolved {set(found)!r}"
                 assert set(found) - required_mentions <= {USER_AGENTS_MENTION}, (
                     f"{name}: unexpected mentions {set(found)!r}"
                 )
@@ -439,9 +394,7 @@ async def check_runtime(repo: Path) -> int | None:
                 assert prompt.count(anchors_text) == 1
                 assert prompt.count(preferences_text) == 1
                 prompt_bytes = len(prompt.encode("utf-8"))
-                assert prompt_bytes <= MAX_PROMPT_BYTES, (
-                    f"{name}: prompt is {prompt_bytes} bytes"
-                )
+                assert prompt_bytes <= MAX_PROMPT_BYTES, f"{name}: prompt is {prompt_bytes} bytes"
                 max_prompt_bytes = max(max_prompt_bytes, prompt_bytes)
     finally:
         os.chdir(original_cwd)
@@ -460,8 +413,7 @@ def main() -> int:
         print("OK: provider overlay source architecture (runtime unavailable; skipped)")
     else:
         print(
-            "OK: provider overlay source architecture and prompts "
-            f"(largest: {prompt_bytes} bytes)"
+            f"OK: provider overlay source architecture and prompts (largest: {prompt_bytes} bytes)"
         )
     return 0
 

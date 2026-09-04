@@ -1,58 +1,49 @@
 ---
 bundle:
   name: my-amplifier-oai
-  version: 0.3.0
+  version: 0.4.0
   description: >
-    OpenAI overlay on my-amplifier-base. Saved settings provide credentials,
-    endpoints, models, priorities, long-context choices, and identity-specific
-    effort values; they override these portable defaults by exact identity.
+    OpenAI overlay on my-amplifier-base. Adds only the wire-level settings that
+    genuinely differ for OpenAI AND are not managed elsewhere. reasoning_effort
+    is deliberately NOT set here: it is a live, machine-specific knob owned by
+    settings.yaml (which wins the same-id provider merge), so pinning it here
+    would be a silent no-op. Only reasoning_summary is governed here.
 
 includes:
-  # ABSOLUTE path, not relative. `amplifier_foundation.registry.BundleRegistry`
-  # constructs its FileSourceHandler with `base_path=Path.cwd()` captured ONCE
-  # at registry-construction time (the CLI process's invocation directory) --
-  # NOT the directory of the bundle file declaring the include. A `./relative.md`
-  # include here only resolves when the CLI happens to be invoked from this
-  # bundles/ directory; from any project dir (e.g. `cd /tmp/x && amplifier run`)
-  # it fails ("File not found: <cwd>/my-amplifier-base.md"), the include is
-  # silently dropped (logged as a warning, not raised), and this overlay ends up
-  # with NO session/tools/hooks/agents at all -- `session.orchestrator` is then
-  # simply absent, not merely misconfigured, and create_session() raises
-  # "Configuration must specify session.orchestrator". Absolute file:// makes
-  # resolution independent of CWD.
+  # Base is included FROM GIT (same repo @main), not by an absolute file:// path.
+  # This resolves identically on every fleet machine (spark-1/2, macstudio,
+  # sams-m5, and any /home/<other> clone) and never reaches back into a local
+  # worktree. A git+ include is CWD-independent; a `./relative.md` include is
+  # NOT -- amplifier_foundation resolves relative includes against Path.cwd()
+  # (the CLI's invocation dir) rather than this file's own directory, so from
+  # any project dir it silently drops (warning-only) and the session dies with
+  # "Configuration must specify session.orchestrator". Upstream fix is
+  # microsoft/amplifier-foundation#303, still UNMERGED in the installed build.
   #
-  # COST OF THIS WORKAROUND: the absolute path is machine-specific, so a clone of
-  # this repo on another host (spark-2, macstudio, the Windows WSL box where the
-  # home dir is /home/samschillace) will NOT resolve the base.
-  #
-  # TODO(revert): fixed upstream by microsoft/amplifier-foundation#303, which
-  # anchors relative includes to the declaring bundle's base_path. Once that
-  # merges and this machine's foundation is updated, change this line back to:
-  #     - bundle: ./my-amplifier-base.md
-  # and delete this comment block. Verify by running `amplifier bundle show
-  # my-amplifier-oai` from a directory OTHER than bundles/ and confirming it
-  # still reports 13 tools / 15 hooks / 10 agents.
-  - bundle: file:///home/ramparte/dev/ANext/my-amplifier/bundles/my-amplifier-base.md
+  # COST: edits to my-amplifier-base.md take effect only after `git push` to
+  # @main -- this fetches the pushed copy. That is already the operating model,
+  # since this overlay is itself registered by git+@main in settings.
+  - bundle: git+https://github.com/ramparte/my-amplifier@main#subdirectory=bundles/my-amplifier-base.md
 
 providers:
+  # reasoning_effort is intentionally ABSENT. It is owned per provider-id by
+  # settings.yaml, which wins the same-id config deep-merge, so any value here
+  # never reaches the wire. reasoning_summary IS set (settings leaves it unset,
+  # so this governs): concise, instead of the provider default 'detailed'.
   - id: openai
     module: provider-openai
     config:
-      reasoning_effort: medium
       reasoning_summary: concise
   - id: terra
     module: provider-openai
     config:
-      reasoning_effort: medium
       reasoning_summary: concise
   - id: luna
     module: provider-openai
     config:
-      reasoning_effort: medium
       reasoning_summary: concise
   - id: luna-max
     module: provider-openai
     config:
-      reasoning_effort: medium
       reasoning_summary: concise
 ---

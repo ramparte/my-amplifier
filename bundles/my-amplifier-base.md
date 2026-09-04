@@ -24,6 +24,14 @@ bundle:
 # If an overlay ever grows past ~30 lines, something has leaked out of this file
 # and should be pushed back in.
 #
+# EXCEPTION -- reasoning_effort is NOT owned by an overlay. It is a live,
+# machine-specific knob that the `amplifier provider` provisioning wizard writes
+# into settings.yaml, and settings WINS the same-id provider deep-merge. An
+# overlay that pins reasoning_effort is therefore a silent no-op. Overlays own
+# only wire settings that settings does not manage (e.g. reasoning_summary).
+# The knob lives in settings.yaml per provider id; keep it at `high`, never
+# `xhigh` (xhigh is the measured spin/non-completion mode on gpt-5.6-sol).
+#
 # Composition mechanics that make this work (amplifier_foundation Bundle.compose):
 #   - `session` / `spawn` are dicts -> deep_merge, LATER (overlay) wins per key
 #   - `providers` / `tools` / `hooks` are lists -> merged by module id
